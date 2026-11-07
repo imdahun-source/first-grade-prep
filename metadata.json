@@ -1,0 +1,6 @@
+{
+  "name": "나도 이제 1학년!",
+  "description": "만 5세 유치원생을 위한 초등학교 1학년 생활 준비 미니게임 (책가방 챙기기, 교과서 펼치기)",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

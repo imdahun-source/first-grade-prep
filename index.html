@@ -1,0 +1,514 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>나도 이제 1학년!</title>
+    <meta name="description" content="만 5세 유치원생을 위한 초등학교 1학년 생활 준비 미니게임 (책가방 챙기기, 교과서 펼치기)" />
+    <meta property="og:title" content="나도 이제 1학년!" />
+    <meta property="og:description" content="만 5세 유치원생을 위한 초등학교 1학년 생활 준비 미니게임 (책가방 챙기기, 교과서 펼치기)" />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary_large_image" />
+
+    <!-- Google Fonts for friendly, legible Korean children's typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Gaegu:wght@700&family=Jua&family=Nanum+Gothic:wght@700;800&display=swap" rel="stylesheet" />
+
+    <!-- Pure CSS Stylesheet: Works natively on GitHub Pages without build tools -->
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body class="kids-app">
+    <!-- Confetti / Particle Container -->
+    <div id="confetti-container" aria-hidden="true"></div>
+
+    <!-- MAIN APP CONTAINER -->
+    <main id="app" class="app-viewport">
+
+      <!-- ================= 1. 시작 화면 (Start Screen) ================= -->
+      <section id="screen-start" class="screen screen-active">
+        <div class="start-card">
+          <div class="school-badge-deco">🏫 즐거운 우리 학교</div>
+          <h1 class="start-title">
+            <span class="highlight-yellow">나도 이제</span>
+            <span class="highlight-coral">1학년!</span>
+            <span class="title-emoji">🎒</span>
+          </h1>
+          <p class="start-sub">유치원 안녕! 초등학교 생활을 신나게 연습해요</p>
+
+          <div class="start-character-box">
+            <div class="char-bubble">"친구야, 같이 학교 가자!"</div>
+            <div class="characters-row">
+              <span class="kid-avatar" role="img" aria-label="신난 남자아이">👦🎒</span>
+              <span class="school-icon" role="img" aria-label="초등학교">🏫</span>
+              <span class="kid-avatar" role="img" aria-label="신난 여자아이">👧🌸</span>
+            </div>
+          </div>
+
+          <button id="btn-start-app" class="btn-primary btn-huge pulse-animation" type="button">
+            <span class="btn-icon">🚀</span>
+            <span class="btn-text">시작하기!</span>
+          </button>
+          <div class="audio-hint-text">🔊 큰 소리로 들려줄게요! 버튼을 콕 눌러주세요.</div>
+        </div>
+      </section>
+
+
+      <!-- ================= 2. 이름 입력 화면 (Name Input Screen) ================= -->
+      <section id="screen-name" class="screen">
+        <div class="name-card">
+          <div class="card-header-kids">
+            <span class="header-icon">✏️</span>
+            <h2>이름이 뭐예요?</h2>
+          </div>
+          <p class="name-sub">선생님이 부를 이름을 콕 적어봐요!</p>
+
+          <div class="name-input-group">
+            <span class="name-badge-icon">🏷️</span>
+            <input
+              type="text"
+              id="input-student-name"
+              class="kids-input"
+              maxlength="8"
+              placeholder="여기를 누르고 이름을 써요"
+              autocomplete="off"
+            />
+            <button id="btn-clear-name" class="btn-secondary btn-icon-only" type="button" title="이름 지우기">❌</button>
+          </div>
+
+          <!-- 5-year-olds friendly Quick Name Chips -->
+          <div class="quick-names-section">
+            <span class="quick-label">또는 아래 예쁜 이름을 골라보세요:</span>
+            <div class="quick-name-chips">
+              <button class="chip-name" type="button" data-name="튼튼이">💪 튼튼이</button>
+              <button class="chip-name" type="button" data-name="민우">👦 민우</button>
+              <button class="chip-name" type="button" data-name="서연">👧 서연</button>
+              <button class="chip-name" type="button" data-name="지우">🌟 지우</button>
+              <button class="chip-name" type="button" data-name="하준">🚀 하준</button>
+              <button class="chip-name" type="button" data-name="수아">🌸 수아</button>
+            </div>
+          </div>
+
+          <div class="name-action-row">
+            <button id="btn-name-confirm" class="btn-primary btn-large" type="button">
+              <span class="btn-icon">🎒</span>
+              <span class="btn-text">학교로 출발!</span>
+            </button>
+          </div>
+        </div>
+      </section>
+
+
+      <!-- ================= 3. 메인 화면 (Main Hub Screen) ================= -->
+      <section id="screen-main" class="screen">
+        <!-- Main Top Bar -->
+        <header class="main-topbar">
+          <div class="top-title-badge">
+            <span class="badge-icon">🏫</span>
+            <span class="badge-text">나도 이제 1학년!</span>
+          </div>
+
+          <div class="student-greeting-pill">
+            <span class="greeting-wave">👋</span>
+            <span id="label-student-greeting" class="greeting-name">튼튼이 예비 1학년, 안녕!</span>
+            <button id="btn-speak-greeting" class="btn-audio-mini" type="button" title="인사 다시 듣기">🔊</button>
+          </div>
+
+          <div class="top-util-group">
+            <button id="btn-mute-toggle" class="btn-util" type="button" title="소리 켜기/끄기">
+              <span id="mute-icon">🔊</span>
+            </button>
+          </div>
+        </header>
+
+        <!-- Schoolyard with 4 Large Game Buttons -->
+        <div class="school-hub-container">
+          <div class="school-banner-guide">
+            <span class="guide-sparkle">✨</span>
+            <span class="guide-text">하고 싶은 놀이를 콕 터치해보세요!</span>
+            <span class="guide-sparkle">✨</span>
+          </div>
+
+          <div class="games-grid">
+            <!-- Game 1: 🎒 책가방 챙기기 (Active) -->
+            <button id="card-game-backpack" class="game-card game-card-active" type="button">
+              <div class="card-stamp-slot">
+                <span id="stamp-backpack" class="card-stamp hidden">💮 참 잘했어요!</span>
+              </div>
+              <div class="game-card-icon-wrap bg-orange-soft">
+                <span class="game-big-icon">🎒</span>
+              </div>
+              <h3 class="game-card-title">책가방 챙기기</h3>
+              <p class="game-card-desc">오늘 필요한 물건을 쏙쏙!</p>
+              <div class="game-card-score-box">
+                <span class="score-label">최고 점수</span>
+                <span id="score-best-backpack" class="score-val">0점</span>
+              </div>
+              <div class="card-action-tag">놀이하기 ▶</div>
+            </button>
+
+            <!-- Game 2: 🚦 등굣길 건너기 (준비 중) -->
+            <div class="game-card game-card-locked" aria-disabled="true">
+              <div class="locked-badge">🔒 준비 중이에요</div>
+              <div class="game-card-icon-wrap bg-yellow-soft">
+                <span class="game-big-icon">🚦</span>
+              </div>
+              <h3 class="game-card-title">등굣길 건너기</h3>
+              <p class="game-card-desc">신호등을 보고 안전하게 횡단보도 건너기</p>
+              <div class="game-card-score-box">
+                <span class="score-label">다음 단계에서 만나요!</span>
+              </div>
+            </div>
+
+            <!-- Game 3: 📖 교과서 펼치기 (Active) -->
+            <button id="card-game-book" class="game-card game-card-active" type="button">
+              <div class="card-stamp-slot">
+                <span id="stamp-book" class="card-stamp hidden">💮 참 잘했어요!</span>
+              </div>
+              <div class="game-card-icon-wrap bg-blue-soft">
+                <span class="game-big-icon">📖</span>
+              </div>
+              <h3 class="game-card-title">교과서 펼치기</h3>
+              <p class="game-card-desc">선생님이 말씀하신 쪽수를 쏙!</p>
+              <div class="game-card-score-box">
+                <span class="score-label">최고 점수</span>
+                <span id="score-best-book" class="score-val">0점</span>
+              </div>
+              <div class="card-action-tag">놀이하기 ▶</div>
+            </button>
+
+            <!-- Game 4: 🗺️ 학교 길 찾기 (준비 중) -->
+            <div class="game-card game-card-locked" aria-disabled="true">
+              <div class="locked-badge">🔒 준비 중이에요</div>
+              <div class="game-card-icon-wrap bg-green-soft">
+                <span class="game-big-icon">🗺️</span>
+              </div>
+              <h3 class="game-card-title">학교 길 찾기</h3>
+              <p class="game-card-desc">교실, 보건실, 화장실 찾아가기</p>
+              <div class="game-card-score-box">
+                <span class="score-label">다음 단계에서 만나요!</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Main Bottom Bar -->
+        <footer class="main-bottombar">
+          <button id="btn-hall-of-fame" class="btn-bottom btn-trophy" type="button">
+            <span class="bottom-icon">🏆</span>
+            <span class="bottom-text">명예의 전당</span>
+            <span class="ready-mini-badge">준비 중</span>
+          </button>
+
+          <button id="btn-next-friend" class="btn-bottom btn-switch-friend" type="button">
+            <span class="bottom-icon">🔄</span>
+            <span class="bottom-text">다음 친구 (이름 바꾸기)</span>
+          </button>
+        </footer>
+      </section>
+
+
+      <!-- ================= 4. 카운트다운 오버레이 ================= -->
+      <div id="overlay-countdown" class="overlay-modal hidden">
+        <div class="countdown-box">
+          <div id="countdown-number" class="countdown-digit">3</div>
+          <div id="countdown-sub" class="countdown-text">준비하세요!</div>
+        </div>
+      </div>
+
+
+      <!-- ================= 5. 게임 1: 🎒 책가방 챙기기 ================= -->
+      <section id="screen-game-backpack" class="screen screen-game">
+        <!-- Game HUD -->
+        <header class="game-hud">
+          <button id="btn-backpack-exit" class="btn-hud-home" type="button" title="메인으로 돌아가기">
+            <span>🏠</span>
+            <span class="hud-home-text">학교로</span>
+          </button>
+
+          <div class="hud-timer-wrap">
+            <div class="timer-label-row">
+              <span class="timer-icon">⏱️ 남은 시간</span>
+              <span id="backpack-timer-text" class="timer-seconds">60초</span>
+            </div>
+            <div class="timer-bar-track">
+              <div id="backpack-timer-bar" class="timer-bar-fill" style="width: 100%;"></div>
+            </div>
+          </div>
+
+          <div class="hud-score-badge">
+            <span class="score-star">⭐️</span>
+            <span class="score-hud-label">점수</span>
+            <span id="backpack-current-score" class="score-hud-val">0</span>
+            <span class="score-hud-unit">점</span>
+          </div>
+        </header>
+
+        <!-- Mission Bar: 오늘 챙길 물건 안내 -->
+        <div class="mission-banner">
+          <div class="mission-info">
+            <span class="mission-tag">오늘 챙길 물건</span>
+            <div id="backpack-mission-items-preview" class="mission-items-row">
+              <!-- Dynamically filled with required items -->
+            </div>
+          </div>
+
+          <button id="btn-backpack-repeat-voice" class="btn-repeat-speech" type="button">
+            <span class="repeat-icon">🔊</span>
+            <span class="repeat-text">안내 다시 듣기</span>
+          </button>
+        </div>
+
+        <!-- Game Playground: Top Shelf (Items) + Bottom (Open Backpack) -->
+        <div class="backpack-playground">
+          <!-- Shelf with 8 Items -->
+          <div class="shelf-container">
+            <div class="shelf-label">👇 필요한 물건을 콕 터치해 가방에 쏙 넣어요!</div>
+            <div id="backpack-items-shelf" class="items-grid">
+              <!-- Dynamically populated 8 items -->
+            </div>
+          </div>
+
+          <!-- Open Backpack Drop Area -->
+          <div class="bag-container">
+            <div class="bag-wrapper" id="backpack-visual-target">
+              <div class="backpack-art">
+                <div class="bag-straps"></div>
+                <div class="bag-body">
+                  <div class="bag-pocket">
+                    <span class="bag-pocket-label">1학년 내 책가방 🎒</span>
+                  </div>
+                  <div id="bag-inside-content" class="bag-inside">
+                    <span class="bag-empty-hint">안내받은 물건을 터치하면 여기로 쏙 들어가요!</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+
+      <!-- ================= 6. 게임 2: 📖 교과서 펼치기 ================= -->
+      <section id="screen-game-book" class="screen screen-game">
+        <!-- Game HUD -->
+        <header class="game-hud">
+          <button id="btn-book-exit" class="btn-hud-home" type="button" title="메인으로 돌아가기">
+            <span>🏠</span>
+            <span class="hud-home-text">학교로</span>
+          </button>
+
+          <div class="hud-timer-wrap">
+            <div class="timer-label-row">
+              <span class="timer-icon">⏱️ 남은 시간</span>
+              <span id="book-timer-text" class="timer-seconds">60초</span>
+            </div>
+            <div class="timer-bar-track">
+              <div id="book-timer-bar" class="timer-bar-fill" style="width: 100%;"></div>
+            </div>
+          </div>
+
+          <div class="hud-score-badge">
+            <span class="score-star">⭐️</span>
+            <span class="score-hud-label">점수</span>
+            <span id="book-current-score" class="score-hud-val">0</span>
+            <span class="score-hud-unit">점</span>
+          </div>
+        </header>
+
+        <!-- Mission Banner: 목표 쪽수 안내 -->
+        <div class="mission-banner book-mission-banner">
+          <div class="mission-info">
+            <span class="mission-tag">오늘의 찾을 쪽수</span>
+            <div class="target-page-display">
+              <span class="target-book-icon">📖</span>
+              <span id="book-target-page-num" class="target-num-highlight">47</span>
+              <span class="target-num-unit">쪽을 펴세요!</span>
+            </div>
+          </div>
+
+          <button id="btn-book-repeat-voice" class="btn-repeat-speech" type="button">
+            <span class="repeat-icon">🔊</span>
+            <span class="repeat-text">안내 다시 듣기</span>
+          </button>
+        </div>
+
+        <!-- Book Playground -->
+        <div class="book-playground">
+
+          <!-- View A: Closed Book Edge View (두께/옆면 보이는 책) -->
+          <div id="book-view-closed" class="book-closed-stage">
+            <div class="closed-guide-banner">
+              <span class="touch-finger-icon">👇</span>
+              <span class="guide-thick-text">책 옆면의 원하는 위치를 콕 눌러서 대략 펼쳐보세요!</span>
+            </div>
+
+            <div class="book-3d-object-wrapper">
+              <div class="book-cover-top">
+                <span class="book-top-title">국어 1-1 (1쪽 ~ 100쪽) 📘</span>
+              </div>
+
+              <!-- Interactive Fore-Edge (책 옆면) -->
+              <div id="book-thickness-slider" class="book-thickness-edge" title="누르면 그 쪽수 근처로 펼쳐집니다">
+                <div class="pages-texture-lines"></div>
+                <div class="thickness-markers-row">
+                  <span class="marker marker-start">1쪽 (앞)</span>
+                  <span class="marker marker-quarter">25쪽</span>
+                  <span class="marker marker-mid">50쪽 (가운데)</span>
+                  <span class="marker marker-three-quarter">75쪽</span>
+                  <span class="marker marker-end">100쪽 (뒤)</span>
+                </div>
+                <div class="touch-hint-pulsing">여기 옆면을 콕 터치하세요! 👆</div>
+              </div>
+
+              <div class="book-cover-bottom"></div>
+            </div>
+          </div>
+
+          <!-- View B: Open Book Spread View (펼쳐진 두 쪽) -->
+          <div id="book-view-open" class="book-open-stage hidden">
+            <div class="book-open-top-guide">
+              <span class="guide-text-bubble">◀ ▶ 큰 화살표로 1장씩 넘기면서 목표 쪽수를 찾아봐요!</span>
+            </div>
+
+            <div class="book-spread-row">
+              <!-- Previous Page Turn Button -->
+              <button id="btn-page-prev" class="btn-turn-page btn-turn-left" type="button" title="앞으로 2쪽 넘기기">
+                <span class="turn-arrow">◀</span>
+                <span class="turn-text">앞으로</span>
+              </button>
+
+              <!-- Open Book Spread -->
+              <div id="book-spread-container" class="book-spread-book">
+                <!-- Left Page (Even Number) -->
+                <div class="book-page book-page-left">
+                  <div class="page-header-strip">
+                    <span class="page-chapter">1학년 국어 1-1</span>
+                    <span class="page-theme">초등학교 즐거운 배움</span>
+                  </div>
+                  <div class="page-illustration-box" id="left-page-illustration">
+                    <div class="kid-book-doodle">🌱</div>
+                    <div class="kid-book-line">새싹이 돋아나요.</div>
+                    <div class="kid-book-line">안녕, 봄아! 반가워.</div>
+                  </div>
+                  <div class="page-footer">
+                    <span id="page-left-num" class="page-num-pill">46 쪽</span>
+                  </div>
+                </div>
+
+                <!-- Book Spine / Crease -->
+                <div class="book-spine-crease"></div>
+
+                <!-- Right Page (Odd Number) -->
+                <div class="book-page book-page-right">
+                  <div class="page-header-strip">
+                    <span class="page-chapter">1학년 국어 1-1</span>
+                    <span class="page-theme">친구들과 함께 노래해요</span>
+                  </div>
+                  <div class="page-illustration-box" id="right-page-illustration">
+                    <div class="kid-book-doodle">🎶</div>
+                    <div class="kid-book-line">학교 종이 땡땡땡!</div>
+                    <div class="kid-book-line">어서 모이자.</div>
+                  </div>
+                  <div class="page-footer">
+                    <span id="page-right-num" class="page-num-pill">47 쪽</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Next Page Turn Button -->
+              <button id="btn-page-next" class="btn-turn-page btn-turn-right" type="button" title="뒤로 2쪽 넘기기">
+                <span class="turn-text">뒤로</span>
+                <span class="turn-arrow">▶</span>
+              </button>
+            </div>
+
+            <!-- Confirm Button -->
+            <div class="book-confirm-row">
+              <button id="btn-book-submit" class="btn-primary btn-submit-page pulse-animation" type="button">
+                <span class="btn-icon">✅</span>
+                <span class="btn-text">다 폈어요!</span>
+              </button>
+              <button id="btn-book-reclose" class="btn-secondary btn-reclose" type="button">
+                <span>📖 처음부터 다시 펼치기</span>
+              </button>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+
+      <!-- ================= 7. 결과 화면 (Result Screen) ================= -->
+      <section id="screen-result" class="screen">
+        <div class="result-card">
+          <div class="result-badge-stamp">💮 참 잘했어요!</div>
+          <div class="result-header">
+            <span class="result-huge-icon">🎉</span>
+            <h2 id="result-game-title" class="result-title">책가방 챙기기 완료!</h2>
+          </div>
+
+          <div id="result-new-record-banner" class="new-record-banner hidden">
+            <span>✨ 🌟 최고 기록 갱신! 대단해요! 🌟 ✨</span>
+          </div>
+
+          <div class="score-summary-grid">
+            <div class="score-summary-box score-box-current">
+              <div class="summary-label">이번 점수</div>
+              <div class="summary-score-val"><span id="result-current-score">80</span>점</div>
+            </div>
+            <div class="score-summary-box score-box-best">
+              <div class="summary-label">나의 최고 점수</div>
+              <div class="summary-score-val"><span id="result-best-score">80</span>점</div>
+            </div>
+          </div>
+
+          <div class="result-praise-speech" id="result-praise-message">
+            "스스로 척척! 초등학교 갈 준비가 완벽해요!"
+          </div>
+
+          <div class="result-actions-row">
+            <button id="btn-result-replay" class="btn-primary btn-large" type="button">
+              <span class="btn-icon">🔄</span>
+              <span class="btn-text">다시 하기</span>
+            </button>
+            <button id="btn-result-home" class="btn-secondary btn-large" type="button">
+              <span class="btn-icon">🏠</span>
+              <span class="btn-text">학교로 가기</span>
+            </button>
+          </div>
+        </div>
+      </section>
+
+
+      <!-- ================= 8. 명예의 전당 모달 (준비 중) ================= -->
+      <div id="modal-hall-of-fame" class="overlay-modal hidden">
+        <div class="fame-modal-card">
+          <div class="fame-header">
+            <span class="fame-trophy">🏆</span>
+            <h3>명예의 전당</h3>
+          </div>
+          <p class="fame-desc">친구들의 멋진 기록을 모으는 공간이에요!</p>
+          <div class="fame-session-preview">
+            <div class="fame-item">
+              <span class="fame-game">🎒 책가방 챙기기 최고 점수</span>
+              <span id="fame-score-backpack" class="fame-val">0점</span>
+            </div>
+            <div class="fame-item">
+              <span class="fame-game">📖 교과서 펼치기 최고 점수</span>
+              <span id="fame-score-book" class="fame-val">0점</span>
+            </div>
+          </div>
+          <div class="fame-ready-notice">
+            <span>⭐️ 다음 단계에서 온라인 랭킹과 데이터베이스가 연결됩니다!</span>
+          </div>
+          <button id="btn-close-fame" class="btn-primary btn-large" type="button">확인</button>
+        </div>
+      </div>
+
+    </main>
+
+    <!-- Pure JavaScript: Works natively on GitHub Pages without build tools -->
+    <script type="module" src="./script.js"></script>
+  </body>
+</html>

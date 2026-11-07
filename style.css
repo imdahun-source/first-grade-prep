@@ -1,0 +1,1596 @@
+/* ==========================================================================
+   나도 이제 1학년! - Pure CSS Stylesheet
+   Designed for: Kindergarteners (Age 5), Android Tablet Chrome Landscape, Touch UI
+   GitHub Pages Ready (Zero Build Tools Required)
+   ========================================================================== */
+
+/* ---------------- CSS Variables & Palette ---------------- */
+:root {
+  --font-family-kids: 'Jua', 'Nanum Gothic', 'Gaegu', 'Apple SD Gothic Neo', sans-serif;
+  --font-family-hand: 'Gaegu', cursive, sans-serif;
+
+  /* Playful Kindergarten Friendly Colors */
+  --color-bg-sky: #E3F2FD;
+  --color-primary: #FF7043;      /* Warm coral orange */
+  --color-primary-hover: #F4511E;
+  --color-secondary: #42A5F5;    /* Bright cheerful blue */
+  --color-secondary-hover: #1E88E5;
+  --color-success: #66BB6A;      /* Soft grass green */
+  --color-success-hover: #43A047;
+  --color-warning: #FFA726;      /* Sunny amber */
+  --color-yellow: #FFD54F;
+  --color-danger: #EF5350;       /* Soft friendly red */
+
+  --color-card-bg: #FFFFFF;
+  --color-card-border: #BBDEFB;
+  --color-text-dark: #263238;
+  --color-text-muted: #546E7A;
+
+  --shadow-kids: 0 8px 0 rgba(0, 0, 0, 0.12), 0 14px 20px rgba(0, 0, 0, 0.08);
+  --shadow-button: 0 6px 0 rgba(0, 0, 0, 0.18), 0 10px 15px rgba(0, 0, 0, 0.1);
+  --shadow-button-pressed: 0 2px 0 rgba(0, 0, 0, 0.2);
+
+  --radius-huge: 28px;
+  --radius-large: 20px;
+  --radius-medium: 14px;
+}
+
+/* ---------------- Reset & Base Setup ---------------- */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  font-family: var(--font-family-kids);
+  color: var(--color-text-dark);
+  background-color: var(--color-bg-sky);
+  font-size: 16px;
+}
+
+/* Animated subtle playful playground background */
+body.kids-app {
+  background: radial-gradient(circle at 15% 20%, rgba(255, 238, 88, 0.25) 0%, transparent 35%),
+              radial-gradient(circle at 85% 80%, rgba(129, 199, 132, 0.22) 0%, transparent 40%),
+              radial-gradient(circle at 50% 50%, rgba(66, 165, 245, 0.15) 0%, transparent 60%),
+              #E3F2FD;
+  background-attachment: fixed;
+}
+
+/* ---------------- Main Viewport Container (Tablet Landscape) ---------------- */
+.app-viewport {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Screen Management */
+.screen {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 16px 24px;
+  opacity: 0;
+  transform: scale(0.97);
+  transition: opacity 0.22s ease, transform 0.22s ease;
+  overflow: hidden;
+}
+
+.screen.screen-active {
+  display: flex;
+  opacity: 1;
+  transform: scale(1);
+  z-index: 10;
+}
+
+.hidden {
+  display: none !important;
+}
+
+/* ---------------- Common Kid-Friendly Buttons ---------------- */
+button {
+  font-family: var(--font-family-kids);
+  border: none;
+  outline: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  text-decoration: none;
+  transition: transform 0.1s ease, box-shadow 0.1s ease, filter 0.15s ease;
+}
+
+button:active {
+  transform: translateY(4px) !important;
+  box-shadow: var(--shadow-button-pressed) !important;
+}
+
+.btn-primary {
+  background: linear-gradient(180deg, #FF8A65 0%, #FF5722 100%);
+  color: #FFFFFF;
+  border-radius: var(--radius-huge);
+  box-shadow: var(--shadow-button);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+}
+
+.btn-primary:hover {
+  filter: brightness(1.05);
+}
+
+.btn-secondary {
+  background: linear-gradient(180deg, #64B5F6 0%, #2196F3 100%);
+  color: #FFFFFF;
+  border-radius: var(--radius-huge);
+  box-shadow: var(--shadow-button);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+}
+
+.btn-huge {
+  font-size: 2.1rem;
+  padding: 16px 48px;
+  min-height: 74px;
+  min-width: 280px;
+}
+
+.btn-large {
+  font-size: 1.5rem;
+  padding: 12px 32px;
+  min-height: 58px;
+}
+
+.btn-icon-only {
+  width: 52px;
+  height: 52px;
+  padding: 0;
+  border-radius: 50%;
+  font-size: 1.4rem;
+}
+
+/* Pulsing effect for call-to-actions */
+.pulse-animation {
+  animation: kidPulse 2s infinite ease-in-out;
+}
+
+@keyframes kidPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.03); }
+}
+
+/* ---------------- 1. 시작 화면 (Screen Start) ---------------- */
+.start-card {
+  background: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(8px);
+  border: 4px solid #FFE082;
+  border-radius: var(--radius-huge);
+  padding: 30px 48px;
+  box-shadow: var(--shadow-kids);
+  text-align: center;
+  max-width: 780px;
+  width: 90%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+
+.school-badge-deco {
+  display: inline-block;
+  background: #FFF8E1;
+  color: #F57F17;
+  font-size: 1.25rem;
+  font-weight: bold;
+  padding: 6px 18px;
+  border-radius: var(--radius-huge);
+  border: 2px dashed #FFD54F;
+}
+
+.start-title {
+  font-size: 3.4rem;
+  line-height: 1.15;
+  letter-spacing: -1px;
+}
+
+.highlight-yellow {
+  color: #FFA000;
+  text-shadow: 2px 2px 0 #FFF9C4;
+}
+
+.highlight-coral {
+  color: #E64A19;
+  text-shadow: 2px 2px 0 #FFCCBC;
+}
+
+.title-emoji {
+  display: inline-block;
+  animation: gentleBob 2s infinite ease-in-out;
+}
+
+@keyframes gentleBob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+.start-sub {
+  font-size: 1.45rem;
+  color: var(--color-text-muted);
+}
+
+.start-character-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin: 6px 0 10px;
+}
+
+.char-bubble {
+  background: #FFFDE7;
+  border: 2px solid #FFF176;
+  color: #795548;
+  padding: 8px 20px;
+  border-radius: var(--radius-huge);
+  font-size: 1.25rem;
+  position: relative;
+}
+
+.characters-row {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  font-size: 3.6rem;
+}
+
+.kid-avatar {
+  display: inline-block;
+}
+
+.school-icon {
+  font-size: 4.2rem;
+}
+
+.audio-hint-text {
+  font-size: 1.15rem;
+  color: #0288D1;
+  background: #E1F5FE;
+  padding: 6px 16px;
+  border-radius: var(--radius-huge);
+}
+
+/* ---------------- 2. 이름 입력 화면 (Screen Name) ---------------- */
+.name-card {
+  background: rgba(255, 255, 255, 0.95);
+  border: 4px solid #81D4FA;
+  border-radius: var(--radius-huge);
+  padding: 30px 44px;
+  box-shadow: var(--shadow-kids);
+  text-align: center;
+  max-width: 760px;
+  width: 90%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.card-header-kids {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 1.7rem;
+  color: #0277BD;
+}
+
+.card-header-kids h2 {
+  font-size: 2.2rem;
+}
+
+.name-sub {
+  font-size: 1.3rem;
+  color: var(--color-text-muted);
+}
+
+.name-input-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  max-width: 520px;
+  background: #F1F8FE;
+  border: 3px solid #039BE5;
+  border-radius: var(--radius-huge);
+  padding: 6px 14px;
+}
+
+.name-badge-icon {
+  font-size: 2rem;
+}
+
+.kids-input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  font-family: var(--font-family-kids);
+  font-size: 1.8rem;
+  color: #01579B;
+  outline: none;
+  text-align: center;
+}
+
+.kids-input::placeholder {
+  font-size: 1.25rem;
+  color: #90A4AE;
+}
+
+.quick-names-section {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: center;
+}
+
+.quick-label {
+  font-size: 1.15rem;
+  color: #546E7A;
+}
+
+.quick-name-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+}
+
+.chip-name {
+  background: #FFFFFF;
+  border: 2px solid #81D4FA;
+  color: #0277BD;
+  font-size: 1.2rem;
+  padding: 8px 18px;
+  border-radius: var(--radius-huge);
+  box-shadow: 0 3px 0 #B3E5FC;
+}
+
+.chip-name:hover {
+  background: #E1F5FE;
+}
+
+.name-action-row {
+  margin-top: 6px;
+}
+
+/* ---------------- 3. 메인 화면 (Screen Main Hub) ---------------- */
+#screen-main {
+  padding: 10px 24px 14px;
+  justify-content: space-between;
+}
+
+.main-topbar {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  background: rgba(255, 255, 255, 0.9);
+  padding: 8px 20px;
+  border-radius: var(--radius-large);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.06);
+  border: 2px solid #B2EBF2;
+}
+
+.top-title-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 1.35rem;
+  font-weight: bold;
+  color: #00838F;
+}
+
+.student-greeting-pill {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #FFF9C4;
+  border: 2px solid #FBC02D;
+  padding: 6px 18px;
+  border-radius: var(--radius-huge);
+  font-size: 1.35rem;
+  font-weight: bold;
+  color: #5D4037;
+}
+
+.btn-audio-mini {
+  background: #FFFFFF;
+  border: 2px solid #FBC02D;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  font-size: 1.1rem;
+}
+
+.btn-util {
+  background: #ECEFF1;
+  border: 2px solid #CFD8DC;
+  border-radius: 50%;
+  width: 44px;
+  height: 44px;
+  font-size: 1.25rem;
+}
+
+/* Schoolyard 4 Games Center Area */
+.school-hub-container {
+  width: 100%;
+  max-width: 1100px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  margin: auto 0;
+}
+
+.school-banner-guide {
+  font-size: 1.35rem;
+  color: #37474F;
+  background: rgba(255, 255, 255, 0.8);
+  padding: 4px 20px;
+  border-radius: var(--radius-huge);
+}
+
+.games-grid {
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 18px;
+}
+
+.game-card {
+  position: relative;
+  background: #FFFFFF;
+  border-radius: var(--radius-large);
+  padding: 16px 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  box-shadow: var(--shadow-kids);
+  border: 3px solid #E0E0E0;
+  min-height: 230px;
+  justify-content: space-between;
+}
+
+.game-card-active {
+  border-color: #FFB74D;
+  background: linear-gradient(180deg, #FFFFFF 0%, #FFFDE7 100%);
+  cursor: pointer;
+}
+
+.game-card-active:hover {
+  transform: translateY(-4px);
+  border-color: #FFA726;
+  box-shadow: 0 12px 0 rgba(0, 0, 0, 0.12), 0 20px 25px rgba(0, 0, 0, 0.1);
+}
+
+.game-card-locked {
+  background: #ECEFF1;
+  border-color: #CFD8DC;
+  opacity: 0.85;
+  cursor: not-allowed;
+}
+
+.card-stamp-slot {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 5;
+}
+
+.card-stamp {
+  display: inline-block;
+  background: #FFEBEE;
+  color: #D32F2F;
+  border: 2px dashed #E53935;
+  padding: 2px 8px;
+  font-size: 0.85rem;
+  font-weight: bold;
+  border-radius: var(--radius-huge);
+  transform: rotate(5deg);
+}
+
+.locked-badge {
+  position: absolute;
+  top: 10px;
+  background: #78909C;
+  color: #FFFFFF;
+  font-size: 0.85rem;
+  padding: 3px 10px;
+  border-radius: var(--radius-huge);
+}
+
+.game-card-icon-wrap {
+  width: 82px;
+  height: 82px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 6px;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.06);
+}
+
+.bg-orange-soft { background: #FFE0B2; }
+.bg-yellow-soft { background: #FFF9C4; }
+.bg-blue-soft { background: #BBDEFB; }
+.bg-green-soft { background: #C8E6C9; }
+
+.game-big-icon {
+  font-size: 3.2rem;
+}
+
+.game-card-title {
+  font-size: 1.45rem;
+  color: var(--color-text-dark);
+  margin-top: 6px;
+}
+
+.game-card-desc {
+  font-size: 0.95rem;
+  color: var(--color-text-muted);
+  line-height: 1.25;
+  min-height: 2.5em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.game-card-score-box {
+  background: #F5F5F5;
+  border-radius: var(--radius-medium);
+  padding: 4px 10px;
+  width: 90%;
+  font-size: 0.95rem;
+}
+
+.game-card-active .game-card-score-box {
+  background: #E8F5E9;
+  color: #2E7D32;
+  font-weight: bold;
+}
+
+.card-action-tag {
+  background: #FF7043;
+  color: #FFFFFF;
+  padding: 4px 16px;
+  border-radius: var(--radius-huge);
+  font-size: 0.95rem;
+  font-weight: bold;
+}
+
+/* Main Bottom Bar */
+.main-bottombar {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 4px 10px;
+}
+
+.btn-bottom {
+  font-size: 1.2rem;
+  padding: 10px 22px;
+  border-radius: var(--radius-huge);
+  background: #FFFFFF;
+  border: 2px solid #CFD8DC;
+  box-shadow: 0 4px 0 #B0BEC5;
+  color: #455A64;
+}
+
+.btn-trophy {
+  border-color: #FFE082;
+  box-shadow: 0 4px 0 #FFD54F;
+  color: #F57F17;
+}
+
+.ready-mini-badge {
+  font-size: 0.75rem;
+  background: #FFF3E0;
+  color: #E65100;
+  padding: 2px 6px;
+  border-radius: var(--radius-huge);
+  border: 1px solid #FFE0B2;
+}
+
+/* ---------------- 4. 카운트다운 오버레이 (Countdown) ---------------- */
+.overlay-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.countdown-box {
+  background: #FFFFFF;
+  border: 6px solid #FFCA28;
+  border-radius: 40px;
+  padding: 40px 70px;
+  text-align: center;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+  animation: countdownPop 0.3s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+}
+
+@keyframes countdownPop {
+  0% { transform: scale(0.6); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.countdown-digit {
+  font-size: 7rem;
+  font-weight: bold;
+  color: #FF5722;
+  line-height: 1;
+  text-shadow: 3px 3px 0 #FFE0B2;
+}
+
+.countdown-text {
+  font-size: 2rem;
+  color: #37474F;
+  margin-top: 10px;
+}
+
+/* ---------------- 5 & 6. 게임 공통 HUD (Game HUD) ---------------- */
+.screen-game {
+  padding: 10px 18px 12px;
+  justify-content: flex-start;
+  gap: 8px;
+}
+
+.game-hud {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  background: rgba(255, 255, 255, 0.95);
+  padding: 8px 16px;
+  border-radius: var(--radius-large);
+  border: 2px solid #B2EBF2;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+}
+
+.btn-hud-home {
+  background: #ECEFF1;
+  border: 2px solid #CFD8DC;
+  border-radius: var(--radius-huge);
+  padding: 6px 16px;
+  font-size: 1.15rem;
+  color: #455A64;
+  box-shadow: 0 3px 0 #B0BEC5;
+}
+
+.hud-timer-wrap {
+  flex: 1;
+  max-width: 500px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.timer-label-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 1.1rem;
+  font-weight: bold;
+  color: #37474F;
+}
+
+.timer-seconds {
+  color: #E64A19;
+  font-size: 1.3rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.timer-bar-track {
+  width: 100%;
+  height: 16px;
+  background: #ECEFF1;
+  border-radius: var(--radius-huge);
+  overflow: hidden;
+  border: 2px solid #CFD8DC;
+}
+
+.timer-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #66BB6A 0%, #FFA726 65%, #EF5350 100%);
+  border-radius: var(--radius-huge);
+  transition: width 0.25s linear;
+}
+
+.hud-score-badge {
+  background: #FFF9C4;
+  border: 2px solid #FBC02D;
+  padding: 6px 18px;
+  border-radius: var(--radius-huge);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  box-shadow: 0 3px 0 #F57F17;
+}
+
+.score-hud-label {
+  font-size: 1.1rem;
+  color: #5D4037;
+}
+
+.score-hud-val {
+  font-size: 1.8rem;
+  font-weight: bold;
+  color: #E65100;
+  font-variant-numeric: tabular-nums;
+  min-width: 32px;
+  text-align: right;
+}
+
+.score-hud-unit {
+  font-size: 1.1rem;
+  color: #5D4037;
+}
+
+/* Mission Banner */
+.mission-banner {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #FFFFFF;
+  border: 3px solid #80DEEA;
+  border-radius: var(--radius-large);
+  padding: 6px 16px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.04);
+}
+
+.mission-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+}
+
+.mission-tag {
+  background: #00ACC1;
+  color: #FFFFFF;
+  font-size: 1.1rem;
+  padding: 4px 12px;
+  border-radius: var(--radius-huge);
+  white-space: nowrap;
+}
+
+.mission-items-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.mission-target-chip {
+  background: #FFF9C4;
+  border: 2px solid #FBC02D;
+  border-radius: var(--radius-huge);
+  padding: 4px 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 1.15rem;
+  font-weight: bold;
+  color: #37474F;
+  transition: all 0.2s ease;
+}
+
+.mission-target-chip.completed {
+  background: #E8F5E9;
+  border-color: #66BB6A;
+  color: #2E7D32;
+  text-decoration: line-through;
+  opacity: 0.6;
+}
+
+.btn-repeat-speech {
+  background: #FFF3E0;
+  border: 2px solid #FFB74D;
+  color: #E65100;
+  padding: 6px 18px;
+  border-radius: var(--radius-huge);
+  font-size: 1.1rem;
+  font-weight: bold;
+  box-shadow: 0 3px 0 #FFA726;
+  white-space: nowrap;
+}
+
+/* ---------------- 5. 게임 1: 🎒 책가방 챙기기 상세 스타일 ---------------- */
+.backpack-playground {
+  width: 100%;
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: 14px;
+  overflow: hidden;
+  align-items: stretch;
+}
+
+.shelf-container {
+  background: rgba(255, 255, 255, 0.9);
+  border: 3px solid #FFE082;
+  border-radius: var(--radius-large);
+  padding: 10px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+}
+
+.shelf-label {
+  font-size: 1.1rem;
+  color: #795548;
+  font-weight: bold;
+}
+
+.items-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  grid-template-rows: repeat(2, 1fr);
+  gap: 10px;
+  flex: 1;
+}
+
+.shelf-item-card {
+  position: relative;
+  background: #FFFFFF;
+  border: 3px solid #E0E0E0;
+  border-radius: var(--radius-medium);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  box-shadow: 0 4px 0 #CFD8DC;
+  cursor: pointer;
+  transition: transform 0.15s ease, border-color 0.15s ease;
+}
+
+.shelf-item-card:hover {
+  transform: translateY(-3px);
+  border-color: #FFA726;
+}
+
+.shelf-item-card:active {
+  transform: translateY(2px);
+}
+
+.item-icon-box {
+  width: 58px;
+  height: 58px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.6rem;
+  border-radius: 12px;
+  margin-bottom: 4px;
+}
+
+.item-name-label {
+  font-size: 1.1rem;
+  font-weight: bold;
+  color: #37474F;
+  text-align: center;
+}
+
+/* Distinct visual cues for similar school items */
+.item-korean-book .item-icon-box {
+  background: #FFE0B2;
+  border: 2px solid #FF9800;
+}
+.item-math-book .item-icon-box {
+  background: #B3E5FC;
+  border: 2px solid #03A9F4;
+}
+.item-note-book .item-icon-box {
+  background: #C8E6C9;
+  border: 2px solid #4CAF50;
+}
+.item-notice-book .item-icon-box {
+  background: #FFF9C4;
+  border: 2px solid #FFD54F;
+}
+.item-distractor {
+  background: #FFF8E1;
+}
+
+/* Wobble / Shake Animation on Wrong Item */
+.shake-anim {
+  animation: gentleShake 0.45s ease-in-out;
+  border-color: #EF5350 !important;
+  background-color: #FFEBEE !important;
+}
+
+@keyframes gentleShake {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-8px); }
+  40%, 80% { transform: translateX(8px); }
+}
+
+/* Fly into bag animation */
+.flying-into-bag {
+  animation: flyIntoBag 0.4s cubic-bezier(0.18, 0.89, 0.32, 1.28) forwards;
+  pointer-events: none;
+}
+
+@keyframes flyIntoBag {
+  0% { transform: scale(1); opacity: 1; }
+  100% { transform: scale(0.3) translate(200px, 150px); opacity: 0; }
+}
+
+/* Open Backpack Art Area */
+.bag-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: stretch;
+}
+
+.bag-wrapper {
+  flex: 1;
+  background: #FFF3E0;
+  border: 3px solid #FFB74D;
+  border-radius: var(--radius-large);
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+}
+
+.backpack-art {
+  flex: 1;
+  background: linear-gradient(180deg, #FF7043 0%, #D84315 100%);
+  border-radius: 24px;
+  border: 4px solid #BF360C;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-shadow: inset 0 3px 6px rgba(0,0,0,0.15), 0 8px 0 #870000;
+  position: relative;
+  overflow: hidden;
+}
+
+.bag-pocket {
+  background: #FFA270;
+  border-radius: 16px;
+  padding: 6px 12px;
+  text-align: center;
+  border: 2px dashed #BF360C;
+}
+
+.bag-pocket-label {
+  font-size: 1.15rem;
+  color: #FFFFFF;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+  font-weight: bold;
+}
+
+.bag-inside {
+  flex: 1;
+  background: #4E342E;
+  border-radius: 16px;
+  border: 3px solid #3E2723;
+  margin-top: 8px;
+  padding: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-content: flex-start;
+  overflow-y: auto;
+  box-shadow: inset 0 4px 10px rgba(0,0,0,0.4);
+}
+
+.bag-empty-hint {
+  margin: auto;
+  font-size: 1rem;
+  color: #D7CCC8;
+  text-align: center;
+  padding: 8px;
+}
+
+.bag-packed-item {
+  background: #FFFFFF;
+  border-radius: 12px;
+  padding: 4px 8px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 1rem;
+  font-weight: bold;
+  animation: popInItem 0.3s ease;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+@keyframes popInItem {
+  0% { transform: scale(0.4); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+/* ---------------- 6. 게임 2: 📖 교과서 펼치기 상세 스타일 ---------------- */
+.book-playground {
+  width: 100%;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.book-mission-banner {
+  border-color: #4FC3F7;
+}
+
+.target-page-display {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.target-book-icon {
+  font-size: 1.8rem;
+}
+
+.target-num-highlight {
+  font-size: 2.3rem;
+  font-weight: bold;
+  color: #0277BD;
+  background: #E1F5FE;
+  padding: 2px 16px;
+  border-radius: var(--radius-huge);
+  border: 3px solid #0288D1;
+  font-variant-numeric: tabular-nums;
+  animation: targetPulse 1.5s infinite ease-in-out;
+}
+
+@keyframes targetPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.06); }
+}
+
+.target-num-unit {
+  font-size: 1.4rem;
+  font-weight: bold;
+  color: #37474F;
+}
+
+/* View A: Closed Book Edge View */
+.book-closed-stage {
+  width: 100%;
+  max-width: 860px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.closed-guide-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #FFF9C4;
+  border: 2px solid #FBC02D;
+  padding: 6px 20px;
+  border-radius: var(--radius-huge);
+}
+
+.touch-finger-icon {
+  font-size: 1.6rem;
+  animation: fingerTap 1.2s infinite ease-in-out;
+}
+
+@keyframes fingerTap {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(6px); }
+}
+
+.guide-thick-text {
+  font-size: 1.25rem;
+  font-weight: bold;
+  color: #5D4037;
+}
+
+.book-3d-object-wrapper {
+  width: 100%;
+  background: #FFFFFF;
+  border-radius: var(--radius-large);
+  padding: 16px;
+  box-shadow: var(--shadow-kids);
+  border: 3px solid #81D4FA;
+}
+
+.book-cover-top {
+  background: linear-gradient(90deg, #0288D1 0%, #03A9F4 100%);
+  color: #FFFFFF;
+  padding: 10px 20px;
+  border-radius: 12px 12px 0 0;
+  font-size: 1.25rem;
+  font-weight: bold;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+}
+
+.book-thickness-edge {
+  position: relative;
+  width: 100%;
+  height: 120px;
+  background: #FAF8F2;
+  border-left: 6px solid #0277BD;
+  border-right: 6px solid #0277BD;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 12px 16px;
+  overflow: hidden;
+  box-shadow: inset 0 2px 10px rgba(0,0,0,0.1);
+}
+
+/* Paper page stripes texture */
+.pages-texture-lines {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: repeating-linear-gradient(
+    90deg,
+    transparent,
+    transparent 4px,
+    rgba(0, 0, 0, 0.04) 4px,
+    rgba(0, 0, 0, 0.04) 5px
+  );
+  pointer-events: none;
+}
+
+.thickness-markers-row {
+  display: flex;
+  justify-content: space-between;
+  position: relative;
+  z-index: 2;
+  font-size: 1.15rem;
+  font-weight: bold;
+  color: #546E7A;
+}
+
+.marker {
+  background: rgba(255, 255, 255, 0.85);
+  padding: 3px 10px;
+  border-radius: var(--radius-huge);
+  border: 1px solid #CFD8DC;
+}
+
+.touch-hint-pulsing {
+  align-self: center;
+  position: relative;
+  z-index: 2;
+  background: #FF7043;
+  color: #FFFFFF;
+  padding: 8px 24px;
+  border-radius: var(--radius-huge);
+  font-size: 1.25rem;
+  font-weight: bold;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+  animation: kidPulse 1.5s infinite;
+}
+
+.book-cover-bottom {
+  background: #0277BD;
+  height: 14px;
+  border-radius: 0 0 12px 12px;
+}
+
+/* View B: Open Book Spread View */
+.book-open-stage {
+  width: 100%;
+  max-width: 980px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.book-open-top-guide {
+  font-size: 1.15rem;
+  background: #FFFDE7;
+  border: 2px solid #FFF59D;
+  padding: 4px 20px;
+  border-radius: var(--radius-huge);
+  color: #5D4037;
+}
+
+.book-spread-row {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+}
+
+.btn-turn-page {
+  background: #FFFFFF;
+  border: 3px solid #81D4FA;
+  border-radius: 50%;
+  width: 74px;
+  height: 74px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  font-weight: bold;
+  color: #0277BD;
+  box-shadow: 0 6px 0 #B3E5FC;
+  flex-shrink: 0;
+}
+
+.btn-turn-page:active {
+  transform: translateY(4px);
+  box-shadow: 0 2px 0 #B3E5FC;
+}
+
+.turn-arrow {
+  font-size: 1.8rem;
+  line-height: 1;
+}
+
+.book-spread-book {
+  flex: 1;
+  max-width: 740px;
+  height: 240px;
+  background: #FDFBF7;
+  border-radius: 16px;
+  border: 4px solid #78909C;
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
+  display: flex;
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.18s ease;
+}
+
+.book-page {
+  flex: 1;
+  padding: 12px 18px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  background: #FFFFFF;
+}
+
+.book-page-left {
+  background: linear-gradient(90deg, #FAF8F5 0%, #FFFFFF 15%);
+  border-right: 1px solid #E0E0E0;
+}
+
+.book-page-right {
+  background: linear-gradient(270deg, #FAF8F5 0%, #FFFFFF 15%);
+}
+
+.book-spine-crease {
+  width: 16px;
+  background: linear-gradient(90deg, rgba(0,0,0,0.12) 0%, rgba(0,0,0,0.02) 50%, rgba(0,0,0,0.12) 100%);
+  position: relative;
+  z-index: 2;
+}
+
+.page-header-strip {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.85rem;
+  color: #90A4AE;
+  border-bottom: 1px solid #ECEFF1;
+  padding-bottom: 4px;
+}
+
+.page-illustration-box {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  text-align: center;
+}
+
+.kid-book-doodle {
+  font-size: 2.8rem;
+}
+
+.kid-book-line {
+  font-size: 1.15rem;
+  color: #37474F;
+  font-family: var(--font-family-hand);
+}
+
+.page-footer {
+  display: flex;
+  justify-content: center;
+  padding-top: 4px;
+}
+
+.page-num-pill {
+  background: #ECEFF1;
+  border: 2px solid #CFD8DC;
+  color: #263238;
+  font-size: 1.5rem;
+  font-weight: bold;
+  padding: 4px 18px;
+  border-radius: var(--radius-huge);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Page flip quick animation */
+.page-flip-anim {
+  animation: pageFlip 0.22s ease-in-out;
+}
+
+@keyframes pageFlip {
+  0% { transform: scaleX(0.97); filter: brightness(0.95); }
+  50% { transform: scaleX(0.92); filter: brightness(0.9); }
+  100% { transform: scaleX(1); filter: brightness(1); }
+}
+
+.book-confirm-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-top: 4px;
+}
+
+.btn-submit-page {
+  font-size: 1.6rem;
+  padding: 12px 42px;
+  min-height: 58px;
+  background: linear-gradient(180deg, #66BB6A 0%, #388E3C 100%);
+  box-shadow: 0 6px 0 #1B5E20;
+}
+
+.btn-reclose {
+  font-size: 1.1rem;
+  padding: 8px 18px;
+  border-radius: var(--radius-huge);
+  background: #ECEFF1;
+  color: #455A64;
+  border: 2px solid #CFD8DC;
+  box-shadow: 0 3px 0 #B0BEC5;
+}
+
+/* ---------------- 7. 결과 화면 (Screen Result) ---------------- */
+.result-card {
+  background: rgba(255, 255, 255, 0.96);
+  border: 4px solid #FFD54F;
+  border-radius: var(--radius-huge);
+  padding: 24px 44px;
+  box-shadow: var(--shadow-kids);
+  text-align: center;
+  max-width: 720px;
+  width: 90%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  position: relative;
+}
+
+.result-badge-stamp {
+  background: #FFEBEE;
+  color: #D32F2F;
+  border: 3px dashed #E53935;
+  padding: 4px 20px;
+  border-radius: var(--radius-huge);
+  font-size: 1.3rem;
+  font-weight: bold;
+  transform: rotate(-3deg);
+}
+
+.result-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.result-huge-icon {
+  font-size: 3rem;
+}
+
+.result-title {
+  font-size: 2.3rem;
+  color: #263238;
+}
+
+.new-record-banner {
+  background: linear-gradient(90deg, #FF9800 0%, #FF5722 100%);
+  color: #FFFFFF;
+  padding: 8px 24px;
+  border-radius: var(--radius-huge);
+  font-size: 1.4rem;
+  font-weight: bold;
+  box-shadow: 0 4px 12px rgba(255, 87, 34, 0.35);
+  animation: kidPulse 1.2s infinite;
+}
+
+.score-summary-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  width: 100%;
+  max-width: 480px;
+}
+
+.score-summary-box {
+  background: #F1F8FE;
+  border: 3px solid #90CAF9;
+  border-radius: var(--radius-large);
+  padding: 12px;
+}
+
+.score-box-current {
+  border-color: #FFB74D;
+  background: #FFF8E1;
+}
+
+.summary-label {
+  font-size: 1.15rem;
+  color: #546E7A;
+}
+
+.summary-score-val {
+  font-size: 2.4rem;
+  font-weight: bold;
+  color: #E65100;
+  font-variant-numeric: tabular-nums;
+}
+
+.result-praise-speech {
+  font-size: 1.35rem;
+  color: #00838F;
+  background: #E0F7FA;
+  padding: 6px 20px;
+  border-radius: var(--radius-huge);
+}
+
+.result-actions-row {
+  display: flex;
+  gap: 16px;
+  margin-top: 6px;
+}
+
+/* ---------------- 8. 명예의 전당 모달 (Hall of Fame) ---------------- */
+.fame-modal-card {
+  background: #FFFFFF;
+  border: 4px solid #FFE082;
+  border-radius: var(--radius-huge);
+  padding: 30px 40px;
+  text-align: center;
+  max-width: 540px;
+  width: 90%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+}
+
+.fame-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 2rem;
+  color: #F57F17;
+}
+
+.fame-trophy {
+  font-size: 2.8rem;
+}
+
+.fame-desc {
+  font-size: 1.25rem;
+  color: var(--color-text-muted);
+}
+
+.fame-session-preview {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.fame-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #FFFDE7;
+  padding: 10px 16px;
+  border-radius: var(--radius-medium);
+  border: 1px solid #FFF59D;
+  font-size: 1.15rem;
+}
+
+.fame-val {
+  font-weight: bold;
+  color: #E65100;
+  font-size: 1.3rem;
+}
+
+.fame-ready-notice {
+  font-size: 1.05rem;
+  color: #0288D1;
+  background: #E1F5FE;
+  padding: 6px 14px;
+  border-radius: var(--radius-huge);
+}
+
+/* ---------------- Confetti Particles ---------------- */
+#confetti-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: 200;
+  overflow: hidden;
+}
+
+.confetti-piece {
+  position: absolute;
+  width: 12px;
+  height: 16px;
+  border-radius: 3px;
+  opacity: 0.9;
+  animation: confettiFall 2.4s ease-out forwards;
+}
+
+@keyframes confettiFall {
+  0% { transform: translateY(-30px) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(105vh) rotate(720deg); opacity: 0; }
+}
+
+/* ---------------- Responsive Tweaks for Narrow Tablet Viewports ---------------- */
+@media (max-height: 600px) {
+  .start-card { padding: 18px 30px; gap: 8px; }
+  .start-title { font-size: 2.6rem; }
+  .characters-row { font-size: 2.8rem; }
+  .games-grid { gap: 10px; }
+  .game-card { min-height: 190px; padding: 10px; }
+  .game-card-icon-wrap { width: 64px; height: 64px; }
+  .game-big-icon { font-size: 2.4rem; }
+  .game-card-title { font-size: 1.25rem; }
+  .book-spread-book { height: 190px; }
+  .btn-huge { font-size: 1.7rem; min-height: 60px; padding: 12px 36px; }
+}
