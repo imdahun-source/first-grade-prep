@@ -45,55 +45,115 @@
             </div>
           </div>
 
-          <button id="btn-start-app" class="btn-primary btn-huge pulse-animation" type="button">
-            <span class="btn-icon">🚀</span>
-            <span class="btn-text">시작하기!</span>
-          </button>
+          <div class="start-actions-row">
+            <button id="btn-start-app" class="btn-primary btn-huge pulse-animation" type="button">
+              <span class="btn-icon">🚀</span>
+              <span class="btn-text">시작하기!</span>
+            </button>
+            <button id="btn-start-leaderboard" class="btn-secondary btn-large" type="button">
+              <span class="btn-icon">🏆</span>
+              <span class="btn-text">명예의 전당</span>
+            </button>
+          </div>
           <div class="audio-hint-text">🔊 큰 소리로 들려줄게요! 버튼을 콕 눌러주세요.</div>
         </div>
       </section>
 
 
-      <!-- ================= 2. 이름 입력 화면 (Name Input Screen) ================= -->
+      <!-- ================= 2. 이름 입력 화면 (Name Selection & Input Screen) ================= -->
       <section id="screen-name" class="screen">
         <div class="name-card">
           <div class="card-header-kids">
-            <span class="header-icon">✏️</span>
-            <h2>이름이 뭐예요?</h2>
+            <span class="header-icon">👋</span>
+            <h2>누구 차례인가요?</h2>
           </div>
-          <p class="name-sub">선생님이 부를 이름을 콕 적어봐요!</p>
+          <p class="name-sub">내 이름을 콕 터치하거나, 새 친구를 등록해요!</p>
 
-          <div class="name-input-group">
-            <span class="name-badge-icon">🏷️</span>
-            <input
-              type="text"
-              id="input-student-name"
-              class="kids-input"
-              maxlength="8"
-              placeholder="여기를 누르고 이름을 써요"
-              autocomplete="off"
-            />
-            <button id="btn-clear-name" class="btn-secondary btn-icon-only" type="button" title="이름 지우기">❌</button>
-          </div>
-
-          <!-- 5-year-olds friendly Quick Name Chips -->
-          <div class="quick-names-section">
-            <span class="quick-label">또는 아래 예쁜 이름을 골라보세요:</span>
-            <div class="quick-name-chips">
-              <button class="chip-name" type="button" data-name="튼튼이">💪 튼튼이</button>
-              <button class="chip-name" type="button" data-name="민우">👦 민우</button>
-              <button class="chip-name" type="button" data-name="서연">👧 서연</button>
-              <button class="chip-name" type="button" data-name="지우">🌟 지우</button>
-              <button class="chip-name" type="button" data-name="하준">🚀 하준</button>
-              <button class="chip-name" type="button" data-name="수아">🌸 수아</button>
+          <!-- Registered Players Cards Grid -->
+          <div class="registered-players-section">
+            <div class="players-grid-header">
+              <span class="players-title">등록된 우리 반 친구들</span>
+              <span id="players-count-badge" class="players-count">불러오는 중...</span>
+            </div>
+            <div id="registered-players-container" class="players-cards-grid">
+              <!-- Dynamically populated from Firestore -->
+              <div class="players-loading-text">친구 명단을 가져오고 있어요... 🏃💨</div>
             </div>
           </div>
 
-          <div class="name-action-row">
-            <button id="btn-name-confirm" class="btn-primary btn-large" type="button">
-              <span class="btn-icon">🎒</span>
-              <span class="btn-text">학교로 출발!</span>
+          <!-- Bottom Action: New Friend Button -->
+          <div class="name-footer-actions">
+            <button id="btn-show-new-player" class="btn-primary btn-large" type="button">
+              <span class="btn-icon">✨</span>
+              <span class="btn-text">새 친구예요 (+이름 쓰기)</span>
             </button>
+          </div>
+        </div>
+
+        <!-- New Player Registration Modal / Dialog -->
+        <div id="modal-new-player" class="overlay-modal hidden">
+          <div class="new-player-card">
+            <div class="card-header-kids">
+              <span class="header-icon">✏️</span>
+              <h3>새 친구 이름 쓰기</h3>
+            </div>
+            <p class="name-sub">선생님이 부를 이름을 적어볼까요?</p>
+
+            <div class="name-input-group">
+              <span class="name-badge-icon">🏷️</span>
+              <input
+                type="text"
+                id="input-student-name"
+                class="kids-input"
+                maxlength="8"
+                placeholder="여기를 누르고 이름을 써요"
+                autocomplete="off"
+              />
+              <button id="btn-clear-name" class="btn-secondary btn-icon-only" type="button" title="이름 지우기">❌</button>
+            </div>
+
+            <!-- Quick Name Chips for 5-year-olds -->
+            <div class="quick-names-section">
+              <span class="quick-label">또는 아래 예쁜 이름을 골라보세요:</span>
+              <div class="quick-name-chips">
+                <button class="chip-name" type="button" data-name="튼튼이">💪 튼튼이</button>
+                <button class="chip-name" type="button" data-name="민우">👦 민우</button>
+                <button class="chip-name" type="button" data-name="서연">👧 서연</button>
+                <button class="chip-name" type="button" data-name="지우">🌟 지우</button>
+                <button class="chip-name" type="button" data-name="하준">🚀 하준</button>
+                <button class="chip-name" type="button" data-name="수아">🌸 수아</button>
+              </div>
+            </div>
+
+            <div class="new-player-actions">
+              <button id="btn-name-confirm" class="btn-primary btn-large" type="button">
+                <span class="btn-icon">🎒</span>
+                <span class="btn-text">등록하고 학교로 출발!</span>
+              </button>
+              <button id="btn-cancel-new-player" class="btn-secondary btn-large" type="button">
+                <span>닫기</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Duplicate Name Confirmation Modal -->
+        <div id="modal-duplicate-confirm" class="overlay-modal hidden">
+          <div class="duplicate-confirm-card">
+            <div class="confirm-icon">🤔</div>
+            <h3>이미 있는 이름이에요!</h3>
+            <p class="confirm-name-text"><strong id="duplicate-target-name">민우</strong> 친구가 이미 등록되어 있어요.</p>
+            <p class="confirm-sub">이 친구가 맞나요?</p>
+            <div class="duplicate-actions-row">
+              <button id="btn-duplicate-yes" class="btn-primary btn-large" type="button">
+                <span class="btn-icon">✅</span>
+                <span class="btn-text">네, 저 맞아요!</span>
+              </button>
+              <button id="btn-duplicate-no" class="btn-secondary btn-large" type="button">
+                <span class="btn-icon">✏️</span>
+                <span class="btn-text">다른 이름 쓸게요</span>
+              </button>
+            </div>
           </div>
         </div>
       </section>
@@ -197,7 +257,6 @@
           <button id="btn-hall-of-fame" class="btn-bottom btn-trophy" type="button">
             <span class="bottom-icon">🏆</span>
             <span class="bottom-text">명예의 전당</span>
-            <span class="ready-mini-badge">준비 중</span>
           </button>
 
           <button id="btn-next-friend" class="btn-bottom btn-switch-friend" type="button">
@@ -448,6 +507,13 @@
             <h2 id="result-game-title" class="result-title">책가방 챙기기 완료!</h2>
           </div>
 
+          <!-- 오늘 종합 1등 축하 효과 배너 -->
+          <div id="result-today-crown-banner" class="today-crown-banner hidden">
+            <span class="crown-sparkle">👑</span>
+            <span class="crown-text">오늘의 명예의 전당 1등에 올랐어요!</span>
+            <span class="crown-sparkle">👑</span>
+          </div>
+
           <div id="result-new-record-banner" class="new-record-banner hidden">
             <span>✨ 🌟 최고 기록 갱신! 대단해요! 🌟 ✨</span>
           </div>
@@ -472,6 +538,10 @@
               <span class="btn-icon">🔄</span>
               <span class="btn-text">다시 하기</span>
             </button>
+            <button id="btn-result-leaderboard" class="btn-primary btn-large btn-gold" type="button">
+              <span class="btn-icon">🏆</span>
+              <span class="btn-text">명예의 전당</span>
+            </button>
             <button id="btn-result-home" class="btn-secondary btn-large" type="button">
               <span class="btn-icon">🏠</span>
               <span class="btn-text">학교로 가기</span>
@@ -481,28 +551,163 @@
       </section>
 
 
-      <!-- ================= 8. 명예의 전당 모달 (준비 중) ================= -->
+      <!-- ================= 8. 🏆 명예의 전당 실시간 리더보드 모달 ================= -->
       <div id="modal-hall-of-fame" class="overlay-modal hidden">
-        <div class="fame-modal-card">
-          <div class="fame-header">
-            <span class="fame-trophy">🏆</span>
-            <h3>명예의 전당</h3>
-          </div>
-          <p class="fame-desc">친구들의 멋진 기록을 모으는 공간이에요!</p>
-          <div class="fame-session-preview">
-            <div class="fame-item">
-              <span class="fame-game">🎒 책가방 챙기기 최고 점수</span>
-              <span id="fame-score-backpack" class="fame-val">0점</span>
+        <div class="leaderboard-modal-card">
+          <!-- Leaderboard Header -->
+          <div class="leaderboard-top-header">
+            <div class="leaderboard-title-group">
+              <span class="leaderboard-trophy-icon">🏆</span>
+              <h2>우리 학교 명예의 전당</h2>
+              <span class="leaderboard-subtitle">친구들의 멋진 기록이 실시간으로 모여요!</span>
             </div>
-            <div class="fame-item">
-              <span class="fame-game">📖 교과서 펼치기 최고 점수</span>
-              <span id="fame-score-book" class="fame-val">0점</span>
+            <button id="btn-close-fame" class="btn-close-circle" type="button" title="닫기">✖</button>
+          </div>
+
+          <!-- Two Tabs: [오늘의 명예의 전당] [역대 명예의 전당] -->
+          <div class="leaderboard-tabs-row">
+            <button id="tab-fame-today" class="tab-fame tab-fame-active" type="button" data-mode="today">
+              <span class="tab-icon">🌟</span>
+              <span class="tab-text">오늘의 명예의 전당</span>
+              <span id="tab-today-date-badge" class="tab-date-badge">2026-11-07</span>
+            </button>
+            <button id="tab-fame-alltime" class="tab-fame" type="button" data-mode="alltime">
+              <span class="tab-icon">👑</span>
+              <span class="tab-text">역대 명예의 전당</span>
+              <span class="tab-date-badge">전체 기간</span>
+            </button>
+          </div>
+
+          <!-- Leaderboard Content Area (Scrollable) -->
+          <div class="leaderboard-content-body">
+
+            <!-- Loading State -->
+            <div id="leaderboard-loading" class="fame-status-box hidden">
+              <div class="loading-spinner-kids">🏃💨</div>
+              <p>기록을 불러오고 있어요...</p>
+            </div>
+
+            <!-- Error State: "인터넷 연결을 확인해 주세요" -->
+            <div id="leaderboard-error" class="fame-status-box hidden">
+              <div class="status-error-icon">📡❌</div>
+              <p class="error-msg-main">인터넷 연결을 확인해 주세요</p>
+              <p class="error-msg-sub">Firebase 데이터베이스와 연결할 수 없어요.</p>
+              <button id="btn-retry-leaderboard" class="btn-secondary btn-large" type="button">
+                <span>🔄 다시 불러오기</span>
+              </button>
+            </div>
+
+            <!-- Main Data View -->
+            <div id="leaderboard-data-view" class="leaderboard-data-container">
+              <!-- Section 1: 종합 순위 시상대 (1~3위 Podium) -->
+              <div class="podium-section">
+                <div class="podium-title">🥇 종합 순위 (게임별 최고 점수 합계)</div>
+                <div class="podium-stage">
+                  <!-- 2nd Place Podium -->
+                  <div class="podium-column column-2nd" id="podium-2nd">
+                    <div class="podium-player-info">
+                      <span class="podium-medal">🥈</span>
+                      <span class="podium-name" id="podium-2nd-name">-</span>
+                      <span class="podium-score" id="podium-2nd-score">0점</span>
+                    </div>
+                    <div class="podium-block block-silver">
+                      <span class="podium-rank-num">2</span>
+                    </div>
+                  </div>
+
+                  <!-- 1st Place Podium (Grand Champion) -->
+                  <div class="podium-column column-1st" id="podium-1st">
+                    <div class="crown-anim-wrap">👑</div>
+                    <div class="podium-player-info">
+                      <span class="podium-medal">🥇</span>
+                      <span class="podium-name highlight-gold" id="podium-1st-name">-</span>
+                      <span class="podium-score" id="podium-1st-score">0점</span>
+                      <span class="podium-breakdown" id="podium-1st-breakdown"></span>
+                    </div>
+                    <div class="podium-block block-gold">
+                      <span class="podium-rank-num">1</span>
+                    </div>
+                  </div>
+
+                  <!-- 3rd Place Podium -->
+                  <div class="podium-column column-3rd" id="podium-3rd">
+                    <div class="podium-player-info">
+                      <span class="podium-medal">🥉</span>
+                      <span class="podium-name" id="podium-3rd-name">-</span>
+                      <span class="podium-score" id="podium-3rd-score">0점</span>
+                    </div>
+                    <div class="podium-block block-bronze">
+                      <span class="podium-rank-num">3</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- 4th and 5th Place List -->
+                <div class="runners-up-row" id="runners-up-list">
+                  <div class="runner-card" id="runner-4th">
+                    <span class="runner-rank">4등</span>
+                    <span class="runner-name" id="runner-4th-name">-</span>
+                    <span class="runner-score" id="runner-4th-score">0점</span>
+                  </div>
+                  <div class="runner-card" id="runner-5th">
+                    <span class="runner-rank">5등</span>
+                    <span class="runner-name" id="runner-5th-name">-</span>
+                    <span class="runner-score" id="runner-5th-score">0점</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Section 2: 게임별 챔피언 4명 (책가방 왕, 신호등 왕, 교과서 왕, 길찾기 왕) -->
+              <div class="game-champions-section">
+                <div class="champions-title">🏅 분야별 최고 챔피언 4인방</div>
+                <div class="champions-grid">
+                  <!-- 1. 책가방 왕 -->
+                  <div class="champion-card champion-backpack">
+                    <div class="champion-badge">🎒 책가방 왕</div>
+                    <div class="champion-avatar">🤴</div>
+                    <div class="champion-player-name" id="champ-backpack-name">기록 없음</div>
+                    <div class="champion-game-score" id="champ-backpack-score">0점</div>
+                    <div class="champion-sub">가장 빠르게 가방을 챙긴 친구</div>
+                  </div>
+
+                  <!-- 2. 신호등 왕 (준비 중) -->
+                  <div class="champion-card champion-traffic">
+                    <div class="champion-badge">🚦 신호등 왕</div>
+                    <div class="champion-avatar">🔒</div>
+                    <div class="champion-player-name">준비 중</div>
+                    <div class="champion-game-score">다음 단계 오픈</div>
+                    <div class="champion-sub">안전하게 횡단보도를 건너는 친구</div>
+                  </div>
+
+                  <!-- 3. 교과서 왕 -->
+                  <div class="champion-card champion-book">
+                    <div class="champion-badge">📖 교과서 왕</div>
+                    <div class="champion-avatar">👸</div>
+                    <div class="champion-player-name" id="champ-book-name">기록 없음</div>
+                    <div class="champion-game-score" id="champ-book-score">0점</div>
+                    <div class="champion-sub">원하는 쪽수를 척척 펼친 친구</div>
+                  </div>
+
+                  <!-- 4. 길찾기 왕 (준비 중) -->
+                  <div class="champion-card champion-map">
+                    <div class="champion-badge">🗺️ 길찾기 왕</div>
+                    <div class="champion-avatar">🔒</div>
+                    <div class="champion-player-name">준비 중</div>
+                    <div class="champion-game-score">다음 단계 오픈</div>
+                    <div class="champion-sub">학교 곳곳을 씩씩하게 찾는 친구</div>
+                  </div>
+                </div>
+              </div>
+
             </div>
           </div>
-          <div class="fame-ready-notice">
-            <span>⭐️ 다음 단계에서 온라인 랭킹과 데이터베이스가 연결됩니다!</span>
+
+          <!-- Leaderboard Footer -->
+          <div class="leaderboard-footer">
+            <button id="btn-fame-close-bottom" class="btn-primary btn-large" type="button">
+              <span>🏠 학교로 돌아가기</span>
+            </button>
           </div>
-          <button id="btn-close-fame" class="btn-primary btn-large" type="button">확인</button>
         </div>
       </div>
 

@@ -1490,70 +1490,548 @@ button:active {
   margin-top: 6px;
 }
 
-/* ---------------- 8. 명예의 전당 모달 (Hall of Fame) ---------------- */
-.fame-modal-card {
-  background: #FFFFFF;
-  border: 4px solid #FFE082;
+/* ---------------- 1-1. 시작 화면 버튼 행 ---------------- */
+.start-actions-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+/* ---------------- 2-1. 이름 선택 화면 (등록된 친구 카드 목록) ---------------- */
+.registered-players-section {
+  width: 100%;
+  max-width: 680px;
+  background: #F1F8FE;
+  border: 3px solid #B3E5FC;
+  border-radius: var(--radius-large);
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.players-grid-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.players-title {
+  font-size: 1.15rem;
+  font-weight: bold;
+  color: #0277BD;
+}
+
+.players-count {
+  font-size: 0.95rem;
+  background: #E1F5FE;
+  color: #0288D1;
+  padding: 2px 10px;
   border-radius: var(--radius-huge);
-  padding: 30px 40px;
+  font-weight: bold;
+}
+
+.players-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 10px;
+  max-height: 180px;
+  overflow-y: auto;
+  padding: 4px;
+}
+
+.players-loading-text, .players-empty-text {
+  grid-column: 1 / -1;
   text-align: center;
-  max-width: 540px;
+  padding: 20px;
+  color: #546E7A;
+  font-size: 1.15rem;
+}
+
+.player-name-card {
+  background: #FFFFFF;
+  border: 3px solid #81D4FA;
+  border-radius: var(--radius-medium);
+  padding: 8px 6px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  box-shadow: 0 4px 0 #B3E5FC;
+  cursor: pointer;
+  transition: transform 0.12s ease, border-color 0.12s ease;
+}
+
+.player-name-card:hover {
+  transform: translateY(-3px);
+  border-color: #0288D1;
+  background: #E1F5FE;
+}
+
+.player-name-card:active {
+  transform: translateY(2px);
+  box-shadow: 0 1px 0 #B3E5FC;
+}
+
+.player-card-avatar {
+  font-size: 2rem;
+  line-height: 1;
+}
+
+.player-card-name {
+  font-size: 1.25rem;
+  font-weight: bold;
+  color: #01579B;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.name-footer-actions {
+  display: flex;
+  justify-content: center;
+  margin-top: 4px;
+}
+
+/* 새 친구 모달 & 중복 확인 모달 */
+.new-player-card, .duplicate-confirm-card {
+  background: #FFFFFF;
+  border: 4px solid #81D4FA;
+  border-radius: var(--radius-huge);
+  padding: 24px 36px;
+  text-align: center;
+  max-width: 600px;
   width: 90%;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 14px;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.35);
 }
 
-.fame-header {
+.new-player-actions, .duplicate-actions-row {
+  display: flex;
+  gap: 12px;
+  margin-top: 6px;
+}
+
+.confirm-icon {
+  font-size: 3.5rem;
+}
+
+.confirm-name-text {
+  font-size: 1.35rem;
+  color: #37474F;
+}
+
+.confirm-sub {
+  font-size: 1.2rem;
+  color: #0277BD;
+  font-weight: bold;
+}
+
+/* ---------------- 7-1. 오늘 1등 왕관 배너 ---------------- */
+.today-crown-banner {
+  background: linear-gradient(90deg, #FFD54F 0%, #FFB300 50%, #FF8F00 100%);
+  color: #4E342E;
+  padding: 8px 26px;
+  border-radius: var(--radius-huge);
+  font-size: 1.45rem;
+  font-weight: bold;
+  box-shadow: 0 6px 16px rgba(255, 179, 0, 0.45);
+  border: 3px solid #FFF8E1;
   display: flex;
   align-items: center;
   gap: 10px;
-  font-size: 2rem;
-  color: #F57F17;
+  animation: kidPulse 1.2s infinite;
 }
 
-.fame-trophy {
-  font-size: 2.8rem;
+.crown-sparkle {
+  font-size: 1.8rem;
+  animation: gentleBob 1.2s infinite ease-in-out;
 }
 
-.fame-desc {
-  font-size: 1.25rem;
-  color: var(--color-text-muted);
+.btn-gold {
+  background: linear-gradient(180deg, #FFD54F 0%, #FFA000 100%) !important;
+  color: #4E342E !important;
+  box-shadow: 0 6px 0 #FF8F00 !important;
 }
 
-.fame-session-preview {
-  width: 100%;
+/* ---------------- 8. 🏆 명예의 전당 실시간 리더보드 모달 상세 ---------------- */
+.leaderboard-modal-card {
+  background: #FFFFFF;
+  border: 5px solid #FFCA28;
+  border-radius: var(--radius-huge);
+  padding: 16px 24px;
+  max-width: 980px;
+  width: 95%;
+  max-height: 90vh;
   display: flex;
   flex-direction: column;
   gap: 10px;
+  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.4);
+  position: relative;
+  overflow: hidden;
 }
 
-.fame-item {
+.leaderboard-top-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  border-bottom: 2px solid #FFF9C4;
+  padding-bottom: 6px;
+}
+
+.leaderboard-title-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.leaderboard-trophy-icon {
+  font-size: 2.4rem;
+}
+
+.leaderboard-top-header h2 {
+  font-size: 1.8rem;
+  color: #F57F17;
+}
+
+.leaderboard-subtitle {
+  font-size: 1.05rem;
+  color: #795548;
   background: #FFFDE7;
-  padding: 10px 16px;
-  border-radius: var(--radius-medium);
-  border: 1px solid #FFF59D;
+  padding: 3px 12px;
+  border-radius: var(--radius-huge);
+}
+
+.btn-close-circle {
+  background: #ECEFF1;
+  color: #546E7A;
+  border: 2px solid #CFD8DC;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  font-size: 1.2rem;
+  cursor: pointer;
+}
+
+/* Tabs: [오늘의 명예의 전당] [역대 명예의 전당] */
+.leaderboard-tabs-row {
+  display: flex;
+  gap: 12px;
+}
+
+.tab-fame {
+  flex: 1;
+  background: #F5F5F5;
+  border: 3px solid #E0E0E0;
+  border-radius: var(--radius-large);
+  padding: 8px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 1.25rem;
+  color: #616161;
+  cursor: pointer;
+  box-shadow: 0 4px 0 #BDBDBD;
+}
+
+.tab-fame-active {
+  background: #FFF8E1;
+  border-color: #FFB300;
+  color: #E65100;
+  font-weight: bold;
+  box-shadow: 0 4px 0 #FFA000;
+}
+
+.tab-date-badge {
+  font-size: 0.85rem;
+  background: rgba(0, 0, 0, 0.08);
+  padding: 2px 8px;
+  border-radius: var(--radius-huge);
+}
+
+.tab-fame-active .tab-date-badge {
+  background: #FFE082;
+  color: #BF360C;
+}
+
+/* Content Body */
+.leaderboard-content-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 6px 4px;
+}
+
+/* Status: Loading & Error */
+.fame-status-box {
+  padding: 40px 20px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.loading-spinner-kids {
+  font-size: 3.5rem;
+  animation: gentleBob 0.8s infinite ease-in-out;
+}
+
+.status-error-icon {
+  font-size: 3.5rem;
+}
+
+.error-msg-main {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #D32F2F;
+}
+
+.error-msg-sub {
+  font-size: 1.15rem;
+  color: #546E7A;
+}
+
+/* Podium Stage (시상대) */
+.podium-section {
+  background: linear-gradient(180deg, #E8F5E9 0%, #FFFFFF 100%);
+  border: 3px solid #C8E6C9;
+  border-radius: var(--radius-large);
+  padding: 12px 16px;
+  margin-bottom: 12px;
+}
+
+.podium-title {
+  font-size: 1.25rem;
+  font-weight: bold;
+  color: #2E7D32;
+  margin-bottom: 8px;
+  text-align: center;
+}
+
+.podium-stage {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 14px;
+  margin-top: 10px;
+  min-height: 180px;
+}
+
+.podium-column {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 170px;
+}
+
+.crown-anim-wrap {
+  font-size: 2.8rem;
+  animation: gentleBob 1.2s infinite ease-in-out;
+  line-height: 1;
+  margin-bottom: -4px;
+}
+
+.podium-player-info {
+  background: #FFFFFF;
+  border-radius: 14px;
+  padding: 6px 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.08);
+  border: 2px solid #E0E0E0;
+  width: 100%;
+  margin-bottom: 6px;
+}
+
+.podium-medal {
+  font-size: 1.6rem;
+}
+
+.podium-name {
+  font-size: 1.3rem;
+  font-weight: bold;
+  color: #263238;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 140px;
+}
+
+.highlight-gold {
+  color: #E65100;
+  font-size: 1.45rem;
+}
+
+.podium-score {
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: #0288D1;
+  font-variant-numeric: tabular-nums;
+}
+
+.podium-breakdown {
+  font-size: 0.8rem;
+  color: #78909C;
+}
+
+/* 3D Podium Pedestal Blocks */
+.podium-block {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.2rem;
+  font-weight: bold;
+  color: #FFFFFF;
+  border-radius: 12px 12px 0 0;
+  box-shadow: inset 0 4px 6px rgba(255,255,255,0.4), 0 6px 0 rgba(0,0,0,0.15);
+}
+
+.column-1st .podium-block {
+  height: 100px;
+  background: linear-gradient(180deg, #FFD54F 0%, #FFB300 100%);
+  border: 3px solid #FFA000;
+}
+
+.column-2nd .podium-block {
+  height: 75px;
+  background: linear-gradient(180deg, #CFD8DC 0%, #90A4AE 100%);
+  border: 3px solid #78909C;
+}
+
+.column-3rd .podium-block {
+  height: 55px;
+  background: linear-gradient(180deg, #FFCCBC 0%, #FF8A65 100%);
+  border: 3px solid #E64A19;
+}
+
+.podium-rank-num {
+  text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+
+/* Runners Up (4th & 5th) */
+.runners-up-row {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  margin-top: 10px;
+}
+
+.runner-card {
+  background: #FFFFFF;
+  border: 2px solid #CFD8DC;
+  border-radius: var(--radius-huge);
+  padding: 6px 18px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
   font-size: 1.15rem;
 }
 
-.fame-val {
+.runner-rank {
   font-weight: bold;
-  color: #E65100;
-  font-size: 1.3rem;
+  color: #78909C;
 }
 
-.fame-ready-notice {
-  font-size: 1.05rem;
-  color: #0288D1;
-  background: #E1F5FE;
-  padding: 6px 14px;
-  border-radius: var(--radius-huge);
+.runner-name {
+  font-weight: bold;
+  color: #37474F;
 }
+
+.runner-score {
+  font-weight: bold;
+  color: #0288D1;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Champions Section (분야별 4대 왕) */
+.game-champions-section {
+  background: #FFFDE7;
+  border: 3px solid #FFF59D;
+  border-radius: var(--radius-large);
+  padding: 12px 16px;
+}
+
+.champions-title {
+  font-size: 1.25rem;
+  font-weight: bold;
+  color: #F57F17;
+  margin-bottom: 8px;
+  text-align: center;
+}
+
+.champions-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+
+.champion-card {
+  background: #FFFFFF;
+  border: 3px solid #FFE082;
+  border-radius: var(--radius-medium);
+  padding: 10px 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  box-shadow: 0 4px 0 #FFD54F;
+}
+
+.champion-badge {
+  font-size: 1.05rem;
+  font-weight: bold;
+  color: #E65100;
+  background: #FFF3E0;
+  padding: 2px 10px;
+  border-radius: var(--radius-huge);
+  border: 1px solid #FFE0B2;
+}
+
+.champion-avatar {
+  font-size: 2.4rem;
+  margin: 4px 0;
+}
+
+.champion-player-name {
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: #263238;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.champion-game-score {
+  font-size: 1.35rem;
+  font-weight: bold;
+  color: #E65100;
+  font-variant-numeric: tabular-nums;
+}
+
+.champion-sub {
+  font-size: 0.8rem;
+  color: #78909C;
+  line-height: 1.2;
+  margin-top: 2px;
+}
+
+.leaderboard-footer {
+  display: flex;
+  justify-content: center;
+  padding-top: 4px;
+}
+
 
 /* ---------------- Confetti Particles ---------------- */
 #confetti-container {
