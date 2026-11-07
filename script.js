@@ -413,21 +413,31 @@ async function syncPlayerStats(studentName) {
   let playerScores = cachedScores.filter(s => s.name === studentName);
 
   let bpMax = 0;
+  let tfMax = 0;
   let bkMax = 0;
+  let mpMax = 0;
 
   playerScores.forEach(item => {
     const sc = Number(item.score) || 0;
     if (item.gameName === '책가방 챙기기') {
       if (sc > bpMax) bpMax = sc;
+    } else if (item.gameName === '등굣길 건너기') {
+      if (sc > tfMax) tfMax = sc;
     } else if (item.gameName === '교과서 펼치기') {
       if (sc > bkMax) bkMax = sc;
+    } else if (item.gameName === '학교 길 찾기') {
+      if (sc > mpMax) mpMax = sc;
     }
   });
 
   state.bestScores.backpack = bpMax;
+  state.bestScores.traffic = tfMax;
   state.bestScores.book = bkMax;
+  state.bestScores.map = mpMax;
   state.stamps.backpack = bpMax > 0;
+  state.stamps.traffic = tfMax > 0;
   state.stamps.book = bkMax > 0;
+  state.stamps.map = mpMax > 0;
 
   updateMainScreenUI();
 }
@@ -439,13 +449,17 @@ function checkIfTodayGrandChampion(studentName) {
   const playerMap = {};
   todayScores.forEach(s => {
     if (!playerMap[s.name]) {
-      playerMap[s.name] = { backpack: 0, book: 0 };
+      playerMap[s.name] = { backpack: 0, traffic: 0, book: 0, map: 0 };
     }
     const val = Number(s.score) || 0;
     if (s.gameName === '책가방 챙기기') {
       playerMap[s.name].backpack = Math.max(playerMap[s.name].backpack, val);
+    } else if (s.gameName === '등굣길 건너기') {
+      playerMap[s.name].traffic = Math.max(playerMap[s.name].traffic, val);
     } else if (s.gameName === '교과서 펼치기') {
       playerMap[s.name].book = Math.max(playerMap[s.name].book, val);
+    } else if (s.gameName === '학교 길 찾기') {
+      playerMap[s.name].map = Math.max(playerMap[s.name].map, val);
     }
   });
 
@@ -453,7 +467,7 @@ function checkIfTodayGrandChampion(studentName) {
   let topTotal = 0;
 
   Object.entries(playerMap).forEach(([name, data]) => {
-    const total = data.backpack + data.book;
+    const total = data.backpack + data.traffic + data.book + data.map;
     if (total > topTotal) {
       topTotal = total;
       topPlayer = name;
@@ -548,7 +562,9 @@ async function refreshLeaderboardData() {
 function renderLeaderboardContent(scoresList) {
   const playerStats = {};
   let champBackpack = { name: '기록 없음', score: 0 };
+  let champTraffic = { name: '기록 없음', score: 0 };
   let champBook = { name: '기록 없음', score: 0 };
+  let champMap = { name: '기록 없음', score: 0 };
 
   scoresList.forEach(item => {
     const name = item.name || '무명 친구';
@@ -556,15 +572,21 @@ function renderLeaderboardContent(scoresList) {
     const game = item.gameName;
 
     if (!playerStats[name]) {
-      playerStats[name] = { backpack: 0, book: 0 };
+      playerStats[name] = { backpack: 0, traffic: 0, book: 0, map: 0 };
     }
 
     if (game === '책가방 챙기기') {
       if (score > playerStats[name].backpack) playerStats[name].backpack = score;
       if (score > champBackpack.score) champBackpack = { name, score };
+    } else if (game === '등굣길 건너기') {
+      if (score > playerStats[name].traffic) playerStats[name].traffic = score;
+      if (score > champTraffic.score) champTraffic = { name, score };
     } else if (game === '교과서 펼치기') {
       if (score > playerStats[name].book) playerStats[name].book = score;
       if (score > champBook.score) champBook = { name, score };
+    } else if (game === '학교 길 찾기') {
+      if (score > playerStats[name].map) playerStats[name].map = score;
+      if (score > champMap.score) champMap = { name, score };
     }
   });
 
@@ -572,8 +594,10 @@ function renderLeaderboardContent(scoresList) {
     return {
       name,
       backpack: data.backpack,
+      traffic: data.traffic,
       book: data.book,
-      total: data.backpack + data.book
+      map: data.map,
+      total: data.backpack + data.traffic + data.book + data.map
     };
   });
 
@@ -590,7 +614,7 @@ function renderLeaderboardContent(scoresList) {
   const p1Breakdown = document.getElementById('podium-1st-breakdown');
   if (p1Name) p1Name.textContent = first ? first.name : '-';
   if (p1Score) p1Score.textContent = first ? `${first.total}점` : '0점';
-  if (p1Breakdown) p1Breakdown.textContent = first ? `(🎒 ${first.backpack} + 📖 ${first.book})` : '';
+  if (p1Breakdown) p1Breakdown.textContent = first ? `(🎒 ${first.backpack} + 🚦 ${first.traffic} + 📖 ${first.book} + 🗺️ ${first.map})` : '';
 
   const p2Name = document.getElementById('podium-2nd-name');
   const p2Score = document.getElementById('podium-2nd-score');
@@ -612,15 +636,26 @@ function renderLeaderboardContent(scoresList) {
   if (r5Name) r5Name.textContent = fifth ? fifth.name : '-';
   if (r5Score) r5Score.textContent = fifth ? `${fifth.total}점` : '0점';
 
+  // 게임별 4대 챔피언
   const cBpName = document.getElementById('champ-backpack-name');
   const cBpScore = document.getElementById('champ-backpack-score');
   if (cBpName) cBpName.textContent = champBackpack.name;
   if (cBpScore) cBpScore.textContent = `${champBackpack.score}점`;
 
+  const cTfName = document.getElementById('champ-traffic-name');
+  const cTfScore = document.getElementById('champ-traffic-score');
+  if (cTfName) cTfName.textContent = champTraffic.name;
+  if (cTfScore) cTfScore.textContent = `${champTraffic.score}점`;
+
   const cBkName = document.getElementById('champ-book-name');
   const cBkScore = document.getElementById('champ-book-score');
   if (cBkName) cBkName.textContent = champBook.name;
   if (cBkScore) cBkScore.textContent = `${champBook.score}점`;
+
+  const cMpName = document.getElementById('champ-map-name');
+  const cMpScore = document.getElementById('champ-map-score');
+  if (cMpName) cMpName.textContent = champMap.name;
+  if (cMpScore) cMpScore.textContent = `${champMap.score}점`;
 }
 
 
@@ -632,11 +667,15 @@ const state = {
   isMuted: false,
   bestScores: {
     backpack: 0,
+    traffic: 0,
     book: 0,
+    map: 0,
   },
   stamps: {
     backpack: false,
+    traffic: false,
     book: false,
+    map: false,
   },
   currentGame: null,
   timerInterval: null,
@@ -654,6 +693,24 @@ const state = {
     currentSpreadLeft: 46,
     currentSpreadRight: 47,
     isBookOpen: false,
+  },
+
+  traffic: {
+    running: false,
+    player: { x: 480, y: 500, vx: 0, vy: 0, speed: 3.6, dir: 'up', step: 0 },
+    trafficLight: 'green',
+    lightTimer: 5.5,
+    cars: [],
+    crosswalk1: { x: 400, width: 140 },
+    crosswalk2: { x: 360, width: 140 },
+  },
+
+  schoolmap: {
+    running: false,
+    player: { x: 600, y: 550, speed: 4.2, dir: 'down', step: 0 },
+    currentMission: null,
+    previousMissionId: null,
+    camera: { x: 0, y: 0 },
   }
 };
 
@@ -777,7 +834,40 @@ const soundEffects = {
       osc.connect(gain);
       gain.connect(audioCtx.destination);
       osc.start();
-      osc.stop(audioCtx.currentTime + duration);
+    } catch (_) {}
+  },
+
+  ding() {
+    if (state.isMuted || !audioCtx) return;
+    try {
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(880, audioCtx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(1320, audioCtx.currentTime + 0.18);
+      gain.gain.setValueAtTime(0.28, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.22);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start();
+      osc.stop(audioCtx.currentTime + 0.22);
+    } catch (_) {}
+  },
+
+  warn() {
+    if (state.isMuted || !audioCtx) return;
+    try {
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(220, audioCtx.currentTime);
+      osc.frequency.linearRampToValueAtTime(140, audioCtx.currentTime + 0.25);
+      gain.gain.setValueAtTime(0.25, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.25);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start();
+      osc.stop(audioCtx.currentTime + 0.25);
     } catch (_) {}
   }
 };
@@ -836,11 +926,16 @@ const screens = {
   name: document.getElementById('screen-name'),
   main: document.getElementById('screen-main'),
   backpack: document.getElementById('screen-game-backpack'),
+  traffic: document.getElementById('screen-game-traffic'),
   book: document.getElementById('screen-game-book'),
+  map: document.getElementById('screen-game-map'),
   result: document.getElementById('screen-result'),
 };
 
 function showScreen(screenKey) {
+  if (screenKey !== 'traffic') stopTrafficGame();
+  if (screenKey !== 'map') stopMapGame();
+
   Object.values(screens).forEach(screen => {
     if (screen) screen.classList.remove('screen-active');
   });
@@ -866,26 +961,40 @@ function updateMainScreenUI() {
     greetingEl.textContent = state.studentName;
   }
 
+  // 1. 책가방
   const bpScoreEl = document.getElementById('score-best-backpack');
   const bpStampEl = document.getElementById('stamp-backpack');
   if (bpScoreEl) bpScoreEl.textContent = `${state.bestScores.backpack}점`;
   if (bpStampEl) {
-    if (state.stamps.backpack) {
-      bpStampEl.classList.remove('hidden');
-    } else {
-      bpStampEl.classList.add('hidden');
-    }
+    if (state.stamps.backpack) bpStampEl.classList.remove('hidden');
+    else bpStampEl.classList.add('hidden');
   }
 
+  // 2. 등굣길
+  const tfScoreEl = document.getElementById('score-best-traffic');
+  const tfStampEl = document.getElementById('stamp-traffic');
+  if (tfScoreEl) tfScoreEl.textContent = `${state.bestScores.traffic}점`;
+  if (tfStampEl) {
+    if (state.stamps.traffic) tfStampEl.classList.remove('hidden');
+    else tfStampEl.classList.add('hidden');
+  }
+
+  // 3. 교과서
   const bkScoreEl = document.getElementById('score-best-book');
   const bkStampEl = document.getElementById('stamp-book');
   if (bkScoreEl) bkScoreEl.textContent = `${state.bestScores.book}점`;
   if (bkStampEl) {
-    if (state.stamps.book) {
-      bkStampEl.classList.remove('hidden');
-    } else {
-      bkStampEl.classList.add('hidden');
-    }
+    if (state.stamps.book) bkStampEl.classList.remove('hidden');
+    else bkStampEl.classList.add('hidden');
+  }
+
+  // 4. 길 찾기
+  const mpScoreEl = document.getElementById('score-best-map');
+  const mpStampEl = document.getElementById('stamp-map');
+  if (mpScoreEl) mpScoreEl.textContent = `${state.bestScores.map}점`;
+  if (mpStampEl) {
+    if (state.stamps.map) mpStampEl.classList.remove('hidden');
+    else mpStampEl.classList.add('hidden');
   }
 }
 
@@ -934,7 +1043,8 @@ function startCountdown(onComplete) {
 }
 
 function startGameTimer(gameKey) {
-  state.timeLeft = 60;
+  const duration = (gameKey === 'traffic' || gameKey === 'map') ? 90 : 60;
+  state.timeLeft = duration;
   state.currentScore = 0;
   updateHUD(gameKey);
 
@@ -965,6 +1075,8 @@ function stopGameTimer() {
  */
 function handleTimeUp(gameKey) {
   stopGameTimer();
+  if (gameKey === 'traffic') stopTrafficGame();
+  if (gameKey === 'map') stopMapGame();
   window.speechSynthesis.cancel();
   soundEffects.beep(true);
 
@@ -988,7 +1100,8 @@ function updateHUD(gameKey) {
 
   if (timerTextEl) timerTextEl.textContent = `${state.timeLeft}초`;
   if (timerBarEl) {
-    const percent = Math.max(0, (state.timeLeft / 60) * 100);
+    const totalDuration = (gameKey === 'traffic' || gameKey === 'map') ? 90 : 60;
+    const percent = Math.max(0, (state.timeLeft / totalDuration) * 100);
     timerBarEl.style.width = `${percent}%`;
   }
   if (scoreEl) scoreEl.textContent = state.currentScore;
@@ -1000,9 +1113,17 @@ function updateHUD(gameKey) {
 // =============================================================================
 function finishGame(gameKey) {
   stopGameTimer();
+  if (gameKey === 'traffic') stopTrafficGame();
+  if (gameKey === 'map') stopMapGame();
   window.speechSynthesis.cancel();
 
-  const gameTitle = gameKey === 'backpack' ? '책가방 챙기기' : '교과서 펼치기';
+  const gameTitles = {
+    backpack: '책가방 챙기기',
+    traffic: '등굣길 건너기',
+    book: '교과서 펼치기',
+    map: '학교 길 찾기'
+  };
+  const gameTitle = gameTitles[gameKey] || '신나는 놀이';
   const score = state.currentScore;
   const prevBest = state.bestScores[gameKey] || 0;
   const isNewRecord = score > prevBest;
@@ -1442,10 +1563,1143 @@ function triggerConfetti() {
 
 
 // =============================================================================
-// [13. DOM 이벤트 리스너 바인딩 (0ms 딜레이 없는 즉시 반응)]
+// [13. 공통 이동 컨트롤러 (MovementController) & 1학년 캐릭터 렌더러]
+// =============================================================================
+class MovementController {
+  constructor(options = {}) {
+    this.keys = { up: false, down: false, left: false, right: false };
+    this.speed = options.speed || 3.5;
+    this.dpadId = options.dpadId || null;
+    this.container = null;
+    this.boundPointerDown = this._onPointerDown.bind(this);
+    this.boundPointerUp = this._onPointerUp.bind(this);
+    this.boundKeyDown = this._onKeyDown.bind(this);
+    this.boundKeyUp = this._onKeyUp.bind(this);
+    this.activePointers = new Map();
+  }
+
+  attach(dpadId) {
+    this.dpadId = dpadId;
+    this.container = document.getElementById(dpadId);
+    this.reset();
+
+    if (this.container) {
+      const buttons = this.container.querySelectorAll('.btn-dpad');
+      buttons.forEach(btn => {
+        btn.addEventListener('pointerdown', this.boundPointerDown);
+        btn.addEventListener('pointerup', this.boundPointerUp);
+        btn.addEventListener('pointercancel', this.boundPointerUp);
+        btn.addEventListener('pointerleave', this.boundPointerUp);
+      });
+    }
+
+    window.addEventListener('keydown', this.boundKeyDown);
+    window.addEventListener('keyup', this.boundKeyUp);
+  }
+
+  detach() {
+    if (this.container) {
+      const buttons = this.container.querySelectorAll('.btn-dpad');
+      buttons.forEach(btn => {
+        btn.removeEventListener('pointerdown', this.boundPointerDown);
+        btn.removeEventListener('pointerup', this.boundPointerUp);
+        btn.removeEventListener('pointercancel', this.boundPointerUp);
+        btn.removeEventListener('pointerleave', this.boundPointerUp);
+        btn.classList.remove('is-active');
+      });
+    }
+    window.removeEventListener('keydown', this.boundKeyDown);
+    window.removeEventListener('keyup', this.boundKeyUp);
+    this.reset();
+  }
+
+  reset() {
+    this.keys.up = false;
+    this.keys.down = false;
+    this.keys.left = false;
+    this.keys.right = false;
+    this.activePointers.clear();
+    if (this.container) {
+      this.container.querySelectorAll('.btn-dpad').forEach(b => b.classList.remove('is-active'));
+    }
+  }
+
+  _onPointerDown(e) {
+    e.preventDefault();
+    const dir = e.currentTarget.dataset.dir;
+    if (dir) {
+      this.keys[dir] = true;
+      e.currentTarget.classList.add('is-active');
+      this.activePointers.set(e.pointerId, dir);
+      initAudioContext();
+      soundEffects.click();
+    }
+  }
+
+  _onPointerUp(e) {
+    e.preventDefault();
+    const dir = e.currentTarget.dataset.dir || this.activePointers.get(e.pointerId);
+    if (dir) {
+      this.keys[dir] = false;
+      e.currentTarget.classList.remove('is-active');
+      this.activePointers.delete(e.pointerId);
+    }
+  }
+
+  _onKeyDown(e) {
+    if (['ArrowUp', 'KeyW'].includes(e.code)) { this.keys.up = true; this._syncVisual('up', true); }
+    if (['ArrowDown', 'KeyS'].includes(e.code)) { this.keys.down = true; this._syncVisual('down', true); }
+    if (['ArrowLeft', 'KeyA'].includes(e.code)) { this.keys.left = true; this._syncVisual('left', true); }
+    if (['ArrowRight', 'KeyD'].includes(e.code)) { this.keys.right = true; this._syncVisual('right', true); }
+  }
+
+  _onKeyUp(e) {
+    if (['ArrowUp', 'KeyW'].includes(e.code)) { this.keys.up = false; this._syncVisual('up', false); }
+    if (['ArrowDown', 'KeyS'].includes(e.code)) { this.keys.down = false; this._syncVisual('down', false); }
+    if (['ArrowLeft', 'KeyA'].includes(e.code)) { this.keys.left = false; this._syncVisual('left', false); }
+    if (['ArrowRight', 'KeyD'].includes(e.code)) { this.keys.right = false; this._syncVisual('right', false); }
+  }
+
+  _syncVisual(dir, isActive) {
+    if (!this.container) return;
+    const btn = this.container.querySelector(`.btn-dpad-${dir}`);
+    if (btn) {
+      if (isActive) btn.classList.add('is-active');
+      else btn.classList.remove('is-active');
+    }
+  }
+
+  getVelocity(speed) {
+    let vx = 0;
+    let vy = 0;
+    if (this.keys.up) vy -= 1;
+    if (this.keys.down) vy += 1;
+    if (this.keys.left) vx -= 1;
+    if (this.keys.right) vx += 1;
+
+    let dir = null;
+    if (vy < 0 && vx === 0) dir = 'up';
+    else if (vy > 0 && vx === 0) dir = 'down';
+    else if (vx < 0 && vy === 0) dir = 'left';
+    else if (vx > 0 && vy === 0) dir = 'right';
+    else if (vx < 0 && vy < 0) dir = 'up-left';
+    else if (vx > 0 && vy < 0) dir = 'up-right';
+    else if (vx < 0 && vy > 0) dir = 'down-left';
+    else if (vx > 0 && vy > 0) dir = 'down-right';
+
+    // 대각선 이동 시 속도 정규화 (루트2 배 빨라짐 방지)
+    if (vx !== 0 && vy !== 0) {
+      vx *= 0.7071;
+      vy *= 0.7071;
+    }
+
+    return {
+      vx: vx * speed,
+      vy: vy * speed,
+      isMoving: vx !== 0 || vy !== 0,
+      dir: dir
+    };
+  }
+}
+
+/**
+ * 1학년 어린이 탑다운 캐릭터 그리기
+ */
+function drawKidCharacter(ctx, x, y, dir = 'up', stepCycle = 0, isMoving = false) {
+  ctx.save();
+  ctx.translate(x, y);
+
+  // 부드러운 그림자
+  ctx.fillStyle = 'rgba(0, 0, 0, 0.22)';
+  ctx.beginPath();
+  ctx.ellipse(0, 16, 16, 7, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  const legOffset = isMoving ? Math.sin(stepCycle * 0.35) * 5 : 0;
+
+  // 발 (운동화)
+  ctx.fillStyle = '#0288D1';
+  ctx.beginPath();
+  ctx.ellipse(-7, 12 - legOffset, 5, 4, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.ellipse(7, 12 + legOffset, 5, 4, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // 책가방 (등 뒤)
+  if (dir.includes('up') || dir === 'left' || dir === 'right') {
+    ctx.fillStyle = '#E64A19'; // 주황빛 1학년 책가방
+    ctx.beginPath();
+    ctx.roundRect(-12, -2, 24, 14, [4, 4, 6, 6]);
+    ctx.fill();
+    ctx.strokeStyle = '#BF360C';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    // 안전 반사띠
+    ctx.fillStyle = '#FFF59D';
+    ctx.fillRect(-9, 3, 18, 3);
+  }
+
+  // 몸통 (노란색 원아복/단정한 셔츠)
+  ctx.fillStyle = '#FFCA28';
+  ctx.beginPath();
+  ctx.roundRect(-11, -8, 22, 19, [6, 6, 4, 4]);
+  ctx.fill();
+
+  // 머리 (피부톤)
+  ctx.fillStyle = '#FFE0B2';
+  ctx.beginPath();
+  ctx.arc(0, -10, 12, 0, Math.PI * 2);
+  ctx.fill();
+
+  // 1학년 병아리 노란 햇모자
+  ctx.fillStyle = '#FDD835';
+  ctx.beginPath();
+  ctx.arc(0, -14, 13, Math.PI, 0, false);
+  ctx.fill();
+
+  // 모자 챙 (바라보는 방향으로)
+  ctx.fillStyle = '#FBC02D';
+  let brimX = 0, brimY = -12, brimW = 22, brimH = 6;
+  if (dir.includes('left')) brimX = -5;
+  if (dir.includes('right')) brimX = 5;
+  if (dir.includes('up')) brimY = -16;
+  if (dir.includes('down')) brimY = -8;
+  ctx.beginPath();
+  ctx.ellipse(brimX, brimY, brimW / 2, brimH / 2, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // 모자 빨간 장식 배지
+  ctx.fillStyle = '#E53935';
+  ctx.beginPath();
+  ctx.arc(0, -15, 3, 0, Math.PI * 2);
+  ctx.fill();
+
+  // 얼굴 표정 (아래 또는 옆을 볼 때)
+  if (!dir.includes('up')) {
+    ctx.fillStyle = '#3E2723';
+    let eyeOffsetX = dir.includes('left') ? -3 : dir.includes('right') ? 3 : 0;
+    // 눈
+    ctx.beginPath();
+    ctx.arc(-4 + eyeOffsetX, -9, 1.8, 0, Math.PI * 2);
+    ctx.arc(4 + eyeOffsetX, -9, 1.8, 0, Math.PI * 2);
+    ctx.fill();
+
+    // 볼터치
+    ctx.fillStyle = 'rgba(255, 138, 128, 0.65)';
+    ctx.beginPath();
+    ctx.arc(-7 + eyeOffsetX, -6, 2.5, 0, Math.PI * 2);
+    ctx.arc(7 + eyeOffsetX, -6, 2.5, 0, Math.PI * 2);
+    ctx.fill();
+
+    // 미소
+    ctx.strokeStyle = '#D84315';
+    ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    ctx.arc(eyeOffsetX, -7, 2.5, 0.2, Math.PI - 0.2, false);
+    ctx.stroke();
+  }
+
+  ctx.restore();
+}
+
+
+// =============================================================================
+// [14. 게임 3: 🚦 등굣길 건너기 상세 로직]
+// =============================================================================
+let trafficMovementController = null;
+let trafficAnimFrameId = null;
+let trafficLightInterval = null;
+
+function startTrafficGame() {
+  state.currentGame = 'traffic';
+  showScreen('traffic');
+
+  if (!trafficMovementController) {
+    trafficMovementController = new MovementController();
+  }
+  trafficMovementController.attach('traffic-dpad');
+
+  // 상태 초기화
+  state.traffic.running = true;
+  state.traffic.player = {
+    x: 480,
+    y: 500,
+    speed: 3.5,
+    dir: 'up',
+    step: 0
+  };
+  state.traffic.trafficLight = 'green';
+  state.traffic.crosswalk1 = { x: 380, width: 140 };
+  state.traffic.crosswalk2 = { x: 440, width: 140 };
+  state.traffic.cars = [];
+
+  updateTrafficPill(true);
+
+  startCountdown(() => {
+    startGameTimer('traffic');
+    speak('초록불에 횡단보도로 안전하게 학교까지 가요!');
+    initTrafficCars();
+    startTrafficLightCycle();
+    runTrafficGameLoop();
+  });
+}
+
+function stopTrafficGame() {
+  state.traffic.running = false;
+  if (trafficMovementController) trafficMovementController.detach();
+  if (trafficAnimFrameId) cancelAnimationFrame(trafficAnimFrameId);
+  if (trafficLightInterval) clearInterval(trafficLightInterval);
+  trafficAnimFrameId = null;
+  trafficLightInterval = null;
+}
+
+function updateTrafficPill(isGreen) {
+  const pill = document.getElementById('traffic-light-pill');
+  if (!pill) return;
+  if (isGreen) {
+    pill.className = 'traffic-pill-green';
+    pill.innerHTML = '🟢 초록불이에요! 횡단보도로 건너요';
+  } else {
+    pill.className = 'traffic-pill-red';
+    pill.innerHTML = '🔴 빨간불이에요, 멈춰요!';
+  }
+}
+
+function startTrafficLightCycle() {
+  if (trafficLightInterval) clearInterval(trafficLightInterval);
+
+  trafficLightInterval = setInterval(() => {
+    if (!state.traffic.running) return;
+
+    if (state.traffic.trafficLight === 'green') {
+      state.traffic.trafficLight = 'red';
+      updateTrafficPill(false);
+      soundEffects.beep();
+      speak('빨간불이에요, 멈춰요');
+    } else {
+      state.traffic.trafficLight = 'green';
+      updateTrafficPill(true);
+      soundEffects.ding();
+      speak('초록불이에요');
+    }
+  }, 6000);
+}
+
+function initTrafficCars() {
+  state.traffic.cars = [
+    // 도로 1 차들 (왼쪽 -> 오른쪽, Y: 360, 410)
+    { id: 1, road: 1, x: 60, y: 355, vx: 3.2, width: 70, height: 32, type: 'bus', color: '#FFD54F' },
+    { id: 2, road: 1, x: 550, y: 405, vx: 3.6, width: 56, height: 28, type: 'sedan', color: '#42A5F5' },
+    // 도로 2 차들 (오른쪽 -> 왼쪽, Y: 120, 170)
+    { id: 3, road: 2, x: 800, y: 120, vx: -3.2, width: 68, height: 32, type: 'truck', color: '#66BB6A' },
+    { id: 4, road: 2, x: 250, y: 170, vx: -3.5, width: 54, height: 28, type: 'sedan', color: '#EF5350' }
+  ];
+}
+
+function updateTrafficCars() {
+  const isGreen = state.traffic.trafficLight === 'green';
+  const cw1 = state.traffic.crosswalk1;
+  const cw2 = state.traffic.crosswalk2;
+
+  state.traffic.cars.forEach(car => {
+    let shouldStop = false;
+
+    if (isGreen) {
+      if (car.road === 1) {
+        // 도로 1 횡단보도 정지선 (왼쪽에서 오므로 crosswalk1.x 직전에서 정지)
+        const stopLine = cw1.x - car.width - 15;
+        if (car.x < stopLine && car.x + car.vx >= stopLine) {
+          car.x = stopLine;
+          shouldStop = true;
+        } else if (car.x >= stopLine && car.x < cw1.x) {
+          shouldStop = true;
+        }
+      } else if (car.road === 2) {
+        // 도로 2 횡단보도 정지선 (오른쪽에서 오므로 crosswalk2.x + width 직전에서 정지)
+        const stopLine = cw2.x + cw2.width + 15;
+        if (car.x > stopLine && car.x + car.vx <= stopLine) {
+          car.x = stopLine;
+          shouldStop = true;
+        } else if (car.x <= stopLine && car.x > cw2.x + cw2.width) {
+          shouldStop = true;
+        }
+      }
+    }
+
+    if (!shouldStop) {
+      car.x += car.vx;
+      // 화면 밖으로 나가면 반대편에서 재등장
+      if (car.vx > 0 && car.x > 980) car.x = -80;
+      if (car.vx < 0 && car.x < -80) car.x = 980;
+    }
+  });
+}
+
+function triggerTrafficSafetyWarning(roadNum) {
+  soundEffects.warn();
+  speak('위험해요! 횡단보도에서 초록불에 건너요');
+
+  const banner = document.getElementById('traffic-warning-banner');
+  if (banner) {
+    banner.classList.remove('hidden');
+    setTimeout(() => banner.classList.add('hidden'), 1800);
+  }
+
+  // 5점 감점 (0점 미만 내려가지 않음)
+  state.currentScore = Math.max(0, state.currentScore - 5);
+  updateHUD('traffic');
+
+  // 안전한 출발 위치로 리스폰
+  if (roadNum === 1) {
+    state.traffic.player.x = 480;
+    state.traffic.player.y = 500;
+  } else {
+    state.traffic.player.x = state.traffic.crosswalk1.x + 70;
+    state.traffic.player.y = 275;
+  }
+}
+
+function runTrafficGameLoop() {
+  if (!state.traffic.running) return;
+
+  const canvas = document.getElementById('traffic-canvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+
+  // 1. 이동 조작 업데이트
+  if (trafficMovementController) {
+    const vel = trafficMovementController.getVelocity(state.traffic.player.speed);
+    state.traffic.player.x += vel.vx;
+    state.traffic.player.y += vel.vy;
+
+    // 경기장 경계 제한
+    state.traffic.player.x = Math.max(30, Math.min(930, state.traffic.player.x));
+    state.traffic.player.y = Math.max(50, Math.min(515, state.traffic.player.y));
+
+    if (vel.isMoving) {
+      state.traffic.player.dir = vel.dir || state.traffic.player.dir;
+      state.traffic.player.step++;
+    }
+  }
+
+  // 2. 자동차 업데이트
+  updateTrafficCars();
+
+  const p = state.traffic.player;
+  const isGreen = state.traffic.trafficLight === 'green';
+  const cw1 = state.traffic.crosswalk1;
+  const cw2 = state.traffic.crosswalk2;
+
+  // 3. 교통 안전 규칙 검증
+  // 도로 1 영역 (Y: 335 ~ 455)
+  if (p.y > 335 && p.y < 455) {
+    const onCw1 = (p.x >= cw1.x - 10 && p.x <= cw1.x + cw1.width + 10);
+    if (!onCw1 || !isGreen) {
+      triggerTrafficSafetyWarning(1);
+    }
+  }
+
+  // 도로 2 영역 (Y: 95 ~ 215)
+  if (p.y > 95 && p.y < 215) {
+    const onCw2 = (p.x >= cw2.x - 10 && p.x <= cw2.x + cw2.width + 10);
+    if (!onCw2 || !isGreen) {
+      triggerTrafficSafetyWarning(2);
+    }
+  }
+
+  // 자동차 충돌 검사
+  state.traffic.cars.forEach(car => {
+    if (Math.abs(p.x - (car.x + car.width / 2)) < (car.width / 2 + 10) &&
+        Math.abs(p.y - (car.y + car.height / 2)) < (car.height / 2 + 12)) {
+      triggerTrafficSafetyWarning(car.road);
+    }
+  });
+
+  // 학교 도착 검사 (Y <= 85)
+  if (p.y <= 85) {
+    state.currentScore += 30;
+    updateHUD('traffic');
+    soundEffects.fanfare();
+    speak('학교에 잘 도착했어요!');
+    triggerConfetti();
+
+    // 다음 라운드: 횡단보도 위치 재배치 (좌우 분산)
+    state.traffic.crosswalk1.x = 180 + Math.floor(Math.random() * 540);
+    state.traffic.crosswalk2.x = 180 + Math.floor(Math.random() * 540);
+    // 리스폰
+    state.traffic.player.x = 480;
+    state.traffic.player.y = 500;
+  }
+
+  // 4. 화면 그리기
+  drawTrafficCanvas(ctx);
+
+  trafficAnimFrameId = requestAnimationFrame(runTrafficGameLoop);
+}
+
+function drawTrafficCanvas(ctx) {
+  ctx.clearRect(0, 0, 960, 540);
+
+  // 1) 상단 학교 영역 (Y: 0 ~ 95)
+  ctx.fillStyle = '#C8E6C9';
+  ctx.fillRect(0, 0, 960, 95);
+
+  // 학교 건물 실루엣 & 벽돌담
+  ctx.fillStyle = '#FFE082';
+  ctx.fillRect(280, 10, 400, 55);
+  ctx.fillStyle = '#EF6C00';
+  ctx.beginPath();
+  ctx.moveTo(480, 0);
+  ctx.lineTo(260, 25);
+  ctx.lineTo(700, 25);
+  ctx.closePath();
+  ctx.fill();
+
+  // 학교 시계탑
+  ctx.fillStyle = '#FFFFFF';
+  ctx.beginPath();
+  ctx.arc(480, 32, 10, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#000';
+  ctx.fillRect(479, 25, 2, 7);
+  ctx.fillRect(479, 31, 5, 2);
+
+  // 학교 교문 기둥 및 명판
+  ctx.fillStyle = '#8D6E63';
+  ctx.fillRect(380, 55, 22, 40);
+  ctx.fillRect(558, 55, 22, 40);
+  ctx.fillStyle = '#FFF8E1';
+  ctx.fillRect(410, 62, 140, 24);
+  ctx.strokeStyle = '#D7CCC8';
+  ctx.strokeRect(410, 62, 140, 24);
+  ctx.fillStyle = '#2E7D32';
+  ctx.font = 'bold 13px "Jua", sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('🏫 즐거운 초등학교', 480, 78);
+
+  // 2) 도로 2 (Y: 95 ~ 215)
+  ctx.fillStyle = '#37474F';
+  ctx.fillRect(0, 95, 960, 120);
+  // 차선
+  ctx.strokeStyle = '#FFEB3B';
+  ctx.lineWidth = 3;
+  ctx.setLineDash([18, 14]);
+  ctx.beginPath();
+  ctx.moveTo(0, 155);
+  ctx.lineTo(960, 155);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // 도로 2 횡단보도 (흰색 줄무늬)
+  const cw2 = state.traffic.crosswalk2;
+  ctx.fillStyle = '#ECEFF1';
+  for (let x = cw2.x; x < cw2.x + cw2.width; x += 22) {
+    ctx.fillRect(x, 97, 13, 116);
+  }
+
+  // 3) 중간 인도 (Y: 215 ~ 335)
+  ctx.fillStyle = '#CFD8DC';
+  ctx.fillRect(0, 215, 960, 120);
+  // 노란색 점자 블록
+  ctx.fillStyle = '#FFD54F';
+  ctx.fillRect(0, 270, 960, 10);
+  // 가로수 벚꽃나무 4그루
+  [120, 320, 660, 860].forEach(tx => {
+    ctx.fillStyle = '#795548';
+    ctx.fillRect(tx - 4, 255, 8, 22);
+    ctx.fillStyle = '#F8BBD0';
+    ctx.beginPath();
+    ctx.arc(tx, 250, 18, 0, Math.PI * 2);
+    ctx.fill();
+  });
+
+  // 4) 도로 1 (Y: 335 ~ 455)
+  ctx.fillStyle = '#37474F';
+  ctx.fillRect(0, 335, 960, 120);
+  // 차선
+  ctx.strokeStyle = '#FFEB3B';
+  ctx.lineWidth = 3;
+  ctx.setLineDash([18, 14]);
+  ctx.beginPath();
+  ctx.moveTo(0, 395);
+  ctx.lineTo(960, 395);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // 도로 1 횡단보도
+  const cw1 = state.traffic.crosswalk1;
+  ctx.fillStyle = '#ECEFF1';
+  for (let x = cw1.x; x < cw1.x + cw1.width; x += 22) {
+    ctx.fillRect(x, 337, 13, 116);
+  }
+
+  // 5) 집 앞 마당/인도 (Y: 455 ~ 540)
+  ctx.fillStyle = '#FFE0B2';
+  ctx.fillRect(0, 455, 960, 85);
+  // 우리 집 울타리 및 문
+  ctx.fillStyle = '#A1887F';
+  ctx.fillRect(400, 520, 160, 14);
+  ctx.fillStyle = '#FFF9C4';
+  ctx.font = 'bold 14px "Jua", sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#E65100';
+  ctx.fillText('🏡 우리 집 (출발선) 🚩', 480, 532);
+
+  // 6) 신호등 그리기 (도로 1 & 2 옆)
+  const isGreen = state.traffic.trafficLight === 'green';
+  drawTrafficLightUnit(ctx, cw1.x + cw1.width + 16, 420, isGreen);
+  drawTrafficLightUnit(ctx, cw2.x - 22, 175, isGreen);
+
+  // 7) 자동차 그리기
+  state.traffic.cars.forEach(car => {
+    drawCarGraphic(ctx, car);
+  });
+
+  // 8) 플레이어 1학년 어린이 그리기
+  const p = state.traffic.player;
+  const isMoving = trafficMovementController && trafficMovementController.getVelocity(1).isMoving;
+  drawKidCharacter(ctx, p.x, p.y, p.dir, p.step, isMoving);
+}
+
+function drawTrafficLightUnit(ctx, x, y, isGreen) {
+  ctx.save();
+  // 기둥
+  ctx.fillStyle = '#78909C';
+  ctx.fillRect(x - 3, y - 5, 6, 26);
+
+  // 신호등 본체
+  ctx.fillStyle = '#263238';
+  ctx.beginPath();
+  ctx.roundRect(x - 12, y - 35, 24, 34, 6);
+  ctx.fill();
+  ctx.strokeStyle = '#37474F';
+  ctx.stroke();
+
+  // 빨간불 (위)
+  ctx.fillStyle = !isGreen ? '#FF1744' : '#542020';
+  ctx.beginPath();
+  ctx.arc(x, y - 24, 6, 0, Math.PI * 2);
+  ctx.fill();
+  if (!isGreen) {
+    ctx.shadowColor = '#FF1744';
+    ctx.shadowBlur = 8;
+  }
+
+  // 초록불 (아래)
+  ctx.fillStyle = isGreen ? '#00E676' : '#143820';
+  ctx.beginPath();
+  ctx.arc(x, y - 10, 6, 0, Math.PI * 2);
+  ctx.fill();
+  if (isGreen) {
+    ctx.shadowColor = '#00E676';
+    ctx.shadowBlur = 8;
+  }
+
+  ctx.restore();
+}
+
+function drawCarGraphic(ctx, car) {
+  ctx.save();
+  ctx.translate(car.x, car.y);
+
+  // 차체
+  ctx.fillStyle = car.color;
+  ctx.beginPath();
+  ctx.roundRect(0, 0, car.width, car.height, 6);
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(0,0,0,0.2)';
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+
+  // 창문
+  ctx.fillStyle = '#E1F5FE';
+  if (car.vx > 0) {
+    ctx.fillRect(10, 4, car.width - 20, car.height - 8);
+    // 앞유리
+    ctx.fillStyle = '#B3E5FC';
+    ctx.fillRect(car.width - 12, 5, 8, car.height - 10);
+    // 전조등
+    ctx.fillStyle = '#FFF59D';
+    ctx.fillRect(car.width - 2, 4, 3, 6);
+    ctx.fillRect(car.width - 2, car.height - 10, 3, 6);
+  } else {
+    ctx.fillRect(10, 4, car.width - 20, car.height - 8);
+    ctx.fillStyle = '#B3E5FC';
+    ctx.fillRect(4, 5, 8, car.height - 10);
+    // 전조등
+    ctx.fillStyle = '#FFF59D';
+    ctx.fillRect(-1, 4, 3, 6);
+    ctx.fillRect(-1, car.height - 10, 3, 6);
+  }
+
+  // 바퀴 4개
+  ctx.fillStyle = '#212121';
+  ctx.fillRect(8, -3, 12, 4);
+  ctx.fillRect(car.width - 20, -3, 12, 4);
+  ctx.fillRect(8, car.height - 1, 12, 4);
+  ctx.fillRect(car.width - 20, car.height - 1, 12, 4);
+
+  // 버스 표식
+  if (car.type === 'bus') {
+    ctx.fillStyle = '#E65100';
+    ctx.font = 'bold 10px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('SCHOOL', car.width / 2, car.height / 2 + 3);
+  }
+
+  ctx.restore();
+}
+
+
+// =============================================================================
+// [15. 게임 4: 🗺️ 학교 길 찾기 상세 로직]
+// =============================================================================
+let mapMovementController = null;
+let mapAnimFrameId = null;
+
+// 7대 학교 필수 장소
+const SCHOOL_ROOMS = [
+  {
+    id: 'classroom',
+    name: '우리 교실',
+    icon: '🏫',
+    speech: '수업이 시작돼요. 우리 교실로 가요.',
+    color: '#FFE082',
+    signText: '1학년 우리 교실 🏫',
+    rect: { x: 70, y: 70, w: 340, h: 240 },
+    door: { x: 200, y: 310, w: 80, h: 45 }
+  },
+  {
+    id: 'restroom',
+    name: '화장실',
+    icon: '🚻',
+    speech: '손을 깨끗이 씻고 싶어요. 화장실로 가요.',
+    color: '#B3E5FC',
+    signText: '깨끗한 화장실 🚻',
+    rect: { x: 470, y: 70, w: 280, h: 240 },
+    door: { x: 570, y: 310, w: 80, h: 45 }
+  },
+  {
+    id: 'nurse',
+    name: '보건실',
+    icon: '🏥',
+    speech: '배가 아파요. 보건실로 가요.',
+    color: '#FFCDD2',
+    signText: '다정하신 보건실 🏥',
+    rect: { x: 810, y: 70, w: 340, h: 240 },
+    door: { x: 940, y: 310, w: 80, h: 45 }
+  },
+  {
+    id: 'library',
+    name: '도서관',
+    icon: '📚',
+    speech: '책을 빌리고 싶어요. 도서관으로 가요.',
+    color: '#C8E6C9',
+    signText: '꿈자람 도서관 📚',
+    rect: { x: 70, y: 450, w: 360, h: 230 },
+    door: { x: 210, y: 420, w: 80, h: 45 }
+  },
+  {
+    id: 'office',
+    name: '교무실',
+    icon: '📋',
+    speech: '선생님을 찾아뵈어요. 교무실로 가요.',
+    color: '#D1C4E9',
+    signText: '선생님 교무실 📋',
+    rect: { x: 770, y: 450, w: 380, h: 230 },
+    door: { x: 920, y: 420, w: 80, h: 45 }
+  },
+  {
+    id: 'cafeteria',
+    name: '급식실',
+    icon: '🍱',
+    speech: '점심시간이에요. 급식실로 가요.',
+    color: '#FFE0B2',
+    signText: '맛있는 급식실 🍱',
+    rect: { x: 70, y: 750, w: 420, h: 180 },
+    door: { x: 240, y: 720, w: 80, h: 45 }
+  },
+  {
+    id: 'playground',
+    name: '운동장',
+    icon: '⚽',
+    speech: '체육 시간이에요! 운동장으로 가요.',
+    color: '#A5D6A7',
+    signText: '신나는 운동장 ⚽',
+    rect: { x: 630, y: 750, w: 680, h: 180 },
+    door: { x: 800, y: 720, w: 90, h: 45 }
+  }
+];
+
+// 통행 불가능한 벽 (방 경계 중 문 개구부를 제외한 벽체들)
+const SCHOOL_WALLS = [
+  // 1. 교실 벽
+  { x: 70, y: 70, w: 340, h: 16 },
+  { x: 70, y: 70, w: 16, h: 240 },
+  { x: 394, y: 70, w: 16, h: 240 },
+  { x: 70, y: 294, w: 130, h: 16 },
+  { x: 280, y: 294, w: 130, h: 16 },
+
+  // 2. 화장실 벽
+  { x: 470, y: 70, w: 280, h: 16 },
+  { x: 470, y: 70, w: 16, h: 240 },
+  { x: 734, y: 70, w: 16, h: 240 },
+  { x: 470, y: 294, w: 100, h: 16 },
+  { x: 650, y: 294, w: 100, h: 16 },
+
+  // 3. 보건실 벽
+  { x: 810, y: 70, w: 340, h: 16 },
+  { x: 810, y: 70, w: 16, h: 240 },
+  { x: 1134, y: 70, w: 16, h: 240 },
+  { x: 810, y: 294, w: 130, h: 16 },
+  { x: 1020, y: 294, w: 130, h: 16 },
+
+  // 4. 도서관 벽
+  { x: 70, y: 450, w: 140, h: 16 },
+  { x: 290, y: 450, w: 140, h: 16 },
+  { x: 70, y: 450, w: 16, h: 230 },
+  { x: 414, y: 450, w: 16, h: 230 },
+  { x: 70, y: 664, w: 360, h: 16 },
+
+  // 5. 교무실 벽
+  { x: 770, y: 450, w: 150, h: 16 },
+  { x: 1000, y: 450, w: 150, h: 16 },
+  { x: 770, y: 450, w: 16, h: 230 },
+  { x: 1134, y: 450, w: 16, h: 230 },
+  { x: 770, y: 664, w: 380, h: 16 },
+
+  // 6. 급식실 벽
+  { x: 70, y: 750, w: 170, h: 16 },
+  { x: 320, y: 750, w: 170, h: 16 },
+  { x: 70, y: 750, w: 16, h: 180 },
+  { x: 474, y: 750, w: 16, h: 180 },
+  { x: 70, y: 914, w: 420, h: 16 },
+
+  // 7. 운동장 울타리
+  { x: 630, y: 750, w: 170, h: 16 },
+  { x: 890, y: 750, w: 420, h: 16 },
+  { x: 630, y: 750, w: 16, h: 180 },
+  { x: 1294, y: 750, w: 16, h: 180 },
+  { x: 630, y: 914, w: 680, h: 16 }
+];
+
+function startMapGame() {
+  state.currentGame = 'map';
+  showScreen('map');
+
+  if (!mapMovementController) {
+    mapMovementController = new MovementController();
+  }
+  mapMovementController.attach('map-dpad');
+
+  state.schoolmap.running = true;
+  state.schoolmap.player = {
+    x: 600,
+    y: 400, // 중앙 복도에서 시작
+    speed: 4.2,
+    dir: 'down',
+    step: 0
+  };
+  state.schoolmap.previousMissionId = null;
+
+  pickNextSchoolMission();
+
+  startCountdown(() => {
+    startGameTimer('map');
+    speakSchoolMission();
+    runMapGameLoop();
+  });
+}
+
+function stopMapGame() {
+  state.schoolmap.running = false;
+  if (mapMovementController) mapMovementController.detach();
+  if (mapAnimFrameId) cancelAnimationFrame(mapAnimFrameId);
+  mapAnimFrameId = null;
+}
+
+function pickNextSchoolMission() {
+  const prevId = state.schoolmap.previousMissionId;
+  const candidates = SCHOOL_ROOMS.filter(r => r.id !== prevId);
+  const picked = candidates[Math.floor(Math.random() * candidates.length)] || SCHOOL_ROOMS[0];
+
+  state.schoolmap.currentMission = picked;
+  state.schoolmap.previousMissionId = picked.id;
+
+  // 상단 미션 배너 UI 업데이트
+  const sitEl = document.getElementById('map-mission-situation');
+  const iconEl = document.getElementById('map-mission-target-icon');
+  const nameEl = document.getElementById('map-mission-target-name');
+
+  if (sitEl) sitEl.textContent = picked.speech.split('.')[0] + '!';
+  if (iconEl) iconEl.textContent = picked.icon;
+  if (nameEl) nameEl.textContent = picked.name;
+}
+
+function speakSchoolMission() {
+  const mission = state.schoolmap.currentMission;
+  if (mission) {
+    speak(mission.speech);
+  }
+}
+
+function resolveWallCollisions(p, walls) {
+  const radius = 15;
+  walls.forEach(w => {
+    const cx = Math.max(w.x, Math.min(p.x, w.x + w.w));
+    const cy = Math.max(w.y, Math.min(p.y, w.y + w.h));
+    const distSq = (p.x - cx) ** 2 + (p.y - cy) ** 2;
+    if (distSq < radius * radius) {
+      const dist = Math.sqrt(distSq);
+      if (dist === 0) {
+        p.y -= 1;
+        return;
+      }
+      const overlap = radius - dist;
+      p.x += ((p.x - cx) / dist) * overlap;
+      p.y += ((p.y - cy) / dist) * overlap;
+    }
+  });
+
+  // 학교 맵 전체 경계
+  p.x = Math.max(30, Math.min(1370, p.x));
+  p.y = Math.max(30, Math.min(930, p.y));
+}
+
+function runMapGameLoop() {
+  if (!state.schoolmap.running) return;
+
+  const canvas = document.getElementById('schoolmap-canvas');
+  const minimapCanvas = document.getElementById('schoolmap-minimap');
+  if (!canvas || !minimapCanvas) return;
+
+  const ctx = canvas.getContext('2d');
+  const miniCtx = minimapCanvas.getContext('2d');
+
+  const p = state.schoolmap.player;
+
+  // 1. 이동 조작 업데이트
+  if (mapMovementController) {
+    const vel = mapMovementController.getVelocity(p.speed);
+    p.x += vel.vx;
+    p.y += vel.vy;
+
+    // 벽 충돌 체크
+    resolveWallCollisions(p, SCHOOL_WALLS);
+
+    if (vel.isMoving) {
+      p.dir = vel.dir || p.dir;
+      p.step++;
+    }
+  }
+
+  // 2. 목적지 문 앞 도착 검사
+  const mission = state.schoolmap.currentMission;
+  if (mission && mission.door) {
+    const d = mission.door;
+    if (p.x >= d.x && p.x <= d.x + d.w && p.y >= d.y && p.y <= d.y + d.h) {
+      // 1회 성공!
+      state.currentScore += 30;
+      updateHUD('map');
+      soundEffects.fanfare();
+      triggerConfetti();
+      speak('참 잘했어요!');
+
+      // 다음 장소 즉시 추첨 (연속 같은 장소 금지)
+      pickNextSchoolMission();
+      setTimeout(speakSchoolMission, 600);
+    }
+  }
+
+  // 3. 카메라 계산 (플레이어 중심 부드러운 스크롤)
+  const viewW = 960;
+  const viewH = 540;
+  const worldW = 1400;
+  const worldH = 960;
+
+  const camX = Math.max(0, Math.min(worldW - viewW, p.x - viewW / 2));
+  const camY = Math.max(0, Math.min(worldH - viewH, p.y - viewH / 2));
+  state.schoolmap.camera = { x: camX, y: camY };
+
+  // 4. 메인 화면 렌더링
+  drawSchoolMapMainView(ctx, camX, camY);
+
+  // 5. 우측 상단 미니지도 렌더링
+  drawSchoolMinimap(miniCtx);
+
+  mapAnimFrameId = requestAnimationFrame(runMapGameLoop);
+}
+
+function drawSchoolMapMainView(ctx, camX, camY) {
+  ctx.save();
+  ctx.clearRect(0, 0, 960, 540);
+  ctx.translate(-camX, -camY);
+
+  // 복도 바닥 (밝은 학교 타일)
+  ctx.fillStyle = '#FFF9C4';
+  ctx.fillRect(0, 0, 1400, 960);
+
+  // 타일 패턴
+  ctx.strokeStyle = '#FFF176';
+  ctx.lineWidth = 1;
+  for (let x = 0; x < 1400; x += 60) {
+    ctx.beginPath();
+    ctx.moveTo(x, 0);
+    ctx.lineTo(x, 960);
+    ctx.stroke();
+  }
+  for (let y = 0; y < 960; y += 60) {
+    ctx.beginPath();
+    ctx.moveTo(0, y);
+    ctx.lineTo(1400, y);
+    ctx.stroke();
+  }
+
+  // 7개 방 바닥 및 가구 장식 그리기
+  SCHOOL_ROOMS.forEach(room => {
+    ctx.fillStyle = room.color;
+    ctx.fillRect(room.rect.x, room.rect.y, room.rect.w, room.rect.h);
+
+    // 방 이름 크게 바닥에 표시
+    ctx.fillStyle = 'rgba(0,0,0,0.1)';
+    ctx.font = 'bold 36px "Jua", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(room.name, room.rect.x + room.rect.w / 2, room.rect.y + room.rect.h / 2 + 12);
+  });
+
+  // 벽 그리기
+  ctx.fillStyle = '#78909C';
+  SCHOOL_WALLS.forEach(w => {
+    ctx.fillRect(w.x, w.y, w.w, w.h);
+  });
+
+  // 문 개구부 및 큰 그림 간판 (문 앞 간판)
+  SCHOOL_ROOMS.forEach(room => {
+    const d = room.door;
+
+    // 문 입구 바닥 매트
+    ctx.fillStyle = '#FFD54F';
+    ctx.fillRect(d.x, d.y, d.w, d.h);
+
+    // 큰 그림 간판 (아이들이 쉽게 알아보는 시인성 높은 간판)
+    ctx.fillStyle = '#FFFFFF';
+    ctx.beginPath();
+    ctx.roundRect(d.x - 20, d.y - 30, d.w + 40, 26, 8);
+    ctx.fill();
+    ctx.strokeStyle = '#00838F';
+    ctx.lineWidth = 2.5;
+    ctx.stroke();
+
+    ctx.fillStyle = '#00695C';
+    ctx.font = 'bold 14px "Jua", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(room.signText, d.x + d.w / 2, d.y - 13);
+  });
+
+  // 목표 장소 반짝이는 별 (목적지 문 앞)
+  const mission = state.schoolmap.currentMission;
+  if (mission && mission.door) {
+    const d = mission.door;
+    const pulse = 1 + Math.sin(Date.now() * 0.008) * 0.2;
+
+    ctx.save();
+    ctx.translate(d.x + d.w / 2, d.y + d.h / 2);
+    ctx.scale(pulse, pulse);
+
+    // 별 후광
+    ctx.fillStyle = 'rgba(255, 235, 59, 0.4)';
+    ctx.beginPath();
+    ctx.arc(0, 0, 28, 0, Math.PI * 2);
+    ctx.fill();
+
+    // 황금빛 큰 별
+    ctx.font = '32px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('⭐', 0, 0);
+    ctx.restore();
+  }
+
+  // 플레이어 그리기
+  const p = state.schoolmap.player;
+  const isMoving = mapMovementController && mapMovementController.getVelocity(1).isMoving;
+  drawKidCharacter(ctx, p.x, p.y, p.dir, p.step, isMoving);
+
+  ctx.restore();
+}
+
+function drawSchoolMinimap(ctx) {
+  const w = 200;
+  const h = 140;
+  const sx = w / 1400;
+  const sy = h / 960;
+
+  ctx.clearRect(0, 0, w, h);
+
+  // 미니맵 복도 배경
+  ctx.fillStyle = '#FFF8E1';
+  ctx.fillRect(0, 0, w, h);
+
+  // 방 블록들
+  SCHOOL_ROOMS.forEach(room => {
+    ctx.fillStyle = room.color;
+    ctx.fillRect(room.rect.x * sx, room.rect.y * sy, room.rect.w * sx, room.rect.h * sy);
+
+    ctx.strokeStyle = '#90A4AE';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(room.rect.x * sx, room.rect.y * sy, room.rect.w * sx, room.rect.h * sy);
+
+    // 미니맵 아이콘
+    ctx.font = '10px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(room.icon, (room.rect.x + room.rect.w / 2) * sx, (room.rect.y + room.rect.h / 2 + 4) * sy);
+  });
+
+  // 목적지 반짝이는 별 (미니맵)
+  const mission = state.schoolmap.currentMission;
+  if (mission && mission.door) {
+    const mx = (mission.door.x + mission.door.w / 2) * sx;
+    const my = (mission.door.y + mission.door.h / 2) * sy;
+
+    const starPulse = 1 + Math.sin(Date.now() * 0.01) * 0.3;
+    ctx.save();
+    ctx.translate(mx, my);
+    ctx.scale(starPulse, starPulse);
+    ctx.font = '14px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('⭐', 0, 0);
+    ctx.restore();
+  }
+
+  // 내 위치 깜빡이는 점 (미니맵)
+  const p = state.schoolmap.player;
+  const px = p.x * sx;
+  const py = p.y * sy;
+
+  // 파동 링
+  const ringRadius = 4 + (Date.now() % 1000) / 1000 * 6;
+  ctx.strokeStyle = 'rgba(0, 230, 118, 0.7)';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.arc(px, py, ringRadius, 0, Math.PI * 2);
+  ctx.stroke();
+
+  // 초록 점
+  ctx.fillStyle = '#00E676';
+  ctx.beginPath();
+  ctx.arc(px, py, 4, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = '#00B0FF';
+  ctx.lineWidth = 1;
+}
+
+// =============================================================================
+// [16. DOM 이벤트 리스너 바인딩 (0ms 딜레이 없는 즉시 반응)]
 // =============================================================================
 document.addEventListener('DOMContentLoaded', () => {
-
   initFirebase();
 
   // 1. 시작 화면 버튼들
@@ -1584,10 +2838,22 @@ document.addEventListener('DOMContentLoaded', () => {
     cardBackpack.addEventListener('click', () => startBackpackGame());
   }
 
+  const cardTraffic = document.getElementById('card-game-traffic');
+  if (cardTraffic) {
+    cardTraffic.addEventListener('pointerdown', () => soundEffects.click());
+    cardTraffic.addEventListener('click', () => startTrafficGame());
+  }
+
   const cardBook = document.getElementById('card-game-book');
   if (cardBook) {
     cardBook.addEventListener('pointerdown', () => soundEffects.click());
     cardBook.addEventListener('click', () => startBookGame());
+  }
+
+  const cardMap = document.getElementById('card-game-map');
+  if (cardMap) {
+    cardMap.addEventListener('pointerdown', () => soundEffects.click());
+    cardMap.addEventListener('click', () => startMapGame());
   }
 
   // 6. 메인 화면 하단 바
@@ -1661,6 +2927,26 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  // 8-2. 게임 3 (등굣길 건너기) HUD
+  const btnTrafficExit = document.getElementById('btn-traffic-exit');
+  if (btnTrafficExit) {
+    btnTrafficExit.addEventListener('click', () => {
+      soundEffects.click();
+      stopTrafficGame();
+      stopGameTimer();
+      window.speechSynthesis.cancel();
+      showScreen('main');
+    });
+  }
+
+  const btnTrafficRepeat = document.getElementById('btn-traffic-repeat-voice');
+  if (btnTrafficRepeat) {
+    btnTrafficRepeat.addEventListener('click', () => {
+      soundEffects.click();
+      speak('초록불에 횡단보도로 안전하게 학교까지 가요!');
+    });
+  }
+
   // 9. 게임 2 HUD & 인터랙션 (0ms 터치 즉시 반응)
   const btnBookExit = document.getElementById('btn-book-exit');
   if (btnBookExit) {
@@ -1720,6 +3006,26 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  // 9-2. 게임 4 (학교 길 찾기) HUD
+  const btnMapExit = document.getElementById('btn-map-exit');
+  if (btnMapExit) {
+    btnMapExit.addEventListener('click', () => {
+      soundEffects.click();
+      stopMapGame();
+      stopGameTimer();
+      window.speechSynthesis.cancel();
+      showScreen('main');
+    });
+  }
+
+  const btnMapRepeat = document.getElementById('btn-map-repeat-voice');
+  if (btnMapRepeat) {
+    btnMapRepeat.addEventListener('click', () => {
+      soundEffects.click();
+      speakSchoolMission();
+    });
+  }
+
   // 10. 결과 화면 버튼들
   const btnResultReplay = document.getElementById('btn-result-replay');
   if (btnResultReplay) {
@@ -1727,8 +3033,14 @@ document.addEventListener('DOMContentLoaded', () => {
       soundEffects.click();
       if (state.currentGame === 'backpack') {
         startBackpackGame();
-      } else {
+      } else if (state.currentGame === 'traffic') {
+        startTrafficGame();
+      } else if (state.currentGame === 'book') {
         startBookGame();
+      } else if (state.currentGame === 'map') {
+        startMapGame();
+      } else {
+        startBackpackGame();
       }
     });
   }

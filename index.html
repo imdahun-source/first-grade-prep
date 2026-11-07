@@ -273,18 +273,22 @@
               <div class="card-action-tag">놀이하기 ▶</div>
             </button>
 
-            <!-- Game 2: 🚦 등굣길 건너기 (준비 중) -->
-            <div class="game-card game-card-locked" aria-disabled="true">
-              <div class="locked-badge">🔒 준비 중이에요</div>
+            <!-- Game 2: 🚦 등굣길 건너기 (Active) -->
+            <button id="card-game-traffic" class="game-card game-card-active" type="button">
+              <div class="card-stamp-slot">
+                <span id="stamp-traffic" class="card-stamp hidden">💮 참 잘했어요!</span>
+              </div>
               <div class="game-card-icon-wrap bg-yellow-soft">
                 <span class="game-big-icon">🚦</span>
               </div>
               <h3 class="game-card-title">등굣길 건너기</h3>
               <p class="game-card-desc">신호등을 보고 안전하게 횡단보도 건너기</p>
               <div class="game-card-score-box">
-                <span class="score-label">다음 단계에서 만나요!</span>
+                <span class="score-label">최고 점수</span>
+                <span id="score-best-traffic" class="score-val">0점</span>
               </div>
-            </div>
+              <div class="card-action-tag">놀이하기 ▶</div>
+            </button>
 
             <!-- Game 3: 📖 교과서 펼치기 (Active) -->
             <button id="card-game-book" class="game-card game-card-active" type="button">
@@ -303,18 +307,22 @@
               <div class="card-action-tag">놀이하기 ▶</div>
             </button>
 
-            <!-- Game 4: 🗺️ 학교 길 찾기 (준비 중) -->
-            <div class="game-card game-card-locked" aria-disabled="true">
-              <div class="locked-badge">🔒 준비 중이에요</div>
+            <!-- Game 4: 🗺️ 학교 길 찾기 (Active) -->
+            <button id="card-game-map" class="game-card game-card-active" type="button">
+              <div class="card-stamp-slot">
+                <span id="stamp-map" class="card-stamp hidden">💮 참 잘했어요!</span>
+              </div>
               <div class="game-card-icon-wrap bg-green-soft">
                 <span class="game-big-icon">🗺️</span>
               </div>
               <h3 class="game-card-title">학교 길 찾기</h3>
               <p class="game-card-desc">교실, 보건실, 화장실 찾아가기</p>
               <div class="game-card-score-box">
-                <span class="score-label">다음 단계에서 만나요!</span>
+                <span class="score-label">최고 점수</span>
+                <span id="score-best-map" class="score-val">0점</span>
               </div>
-            </div>
+              <div class="card-action-tag">놀이하기 ▶</div>
+            </button>
           </div>
         </div>
 
@@ -564,6 +572,173 @@
       </section>
 
 
+      <!-- ================= 6-2. 게임 3: 🚦 등굣길 건너기 ================= -->
+      <section id="screen-game-traffic" class="screen screen-game">
+        <!-- Game HUD -->
+        <header class="game-hud">
+          <button id="btn-traffic-exit" class="btn-hud-home" type="button" title="메인으로 돌아가기">
+            <span>🏠</span>
+            <span class="hud-home-text">학교로</span>
+          </button>
+
+          <div class="hud-timer-wrap">
+            <div class="timer-label-row">
+              <span class="timer-icon">⏱️ 남은 시간</span>
+              <span id="traffic-timer-text" class="timer-seconds">90초</span>
+            </div>
+            <div class="timer-bar-track">
+              <div id="traffic-timer-bar" class="timer-bar-fill" style="width: 100%;"></div>
+            </div>
+          </div>
+
+          <div class="hud-score-badge">
+            <span class="score-star">⭐️</span>
+            <span class="score-hud-label">점수</span>
+            <span id="traffic-current-score" class="score-hud-val">0</span>
+            <span class="score-hud-unit">점</span>
+          </div>
+        </header>
+
+        <!-- Mission Banner -->
+        <div class="mission-banner traffic-mission-banner">
+          <div class="mission-info">
+            <span class="mission-tag">🚦 등굣길 안전 약속</span>
+            <div class="traffic-status-display">
+              <span id="traffic-light-pill" class="traffic-pill-green">🟢 초록불에만 횡단보도로 건너요!</span>
+            </div>
+          </div>
+
+          <button id="btn-traffic-repeat-voice" class="btn-repeat-speech" type="button">
+            <span class="repeat-icon">🔊</span>
+            <span class="repeat-text">안내 다시 듣기</span>
+          </button>
+        </div>
+
+        <!-- Traffic Canvas Stage -->
+        <div class="game-canvas-container" id="traffic-canvas-wrapper">
+          <canvas id="traffic-canvas" width="960" height="540"></canvas>
+
+          <!-- Warning Flash Overlay -->
+          <div id="traffic-warning-banner" class="game-warning-overlay hidden">
+            <div class="warning-box">
+              <span class="warning-icon">⚠️</span>
+              <span class="warning-text">위험해요! 횡단보도에서 초록불에 건너요</span>
+            </div>
+          </div>
+
+          <!-- Virtual D-Pad (Left-Bottom, child-friendly large buttons) -->
+          <div class="virtual-dpad" id="traffic-dpad" aria-label="이동 방향키">
+            <button class="btn-dpad btn-dpad-up" type="button" data-dir="up" aria-label="위로 이동">
+              <span class="dpad-icon">⬆️</span>
+              <span class="dpad-label">위</span>
+            </button>
+            <div class="dpad-middle-row">
+              <button class="btn-dpad btn-dpad-left" type="button" data-dir="left" aria-label="왼쪽으로 이동">
+                <span class="dpad-icon">⬅️</span>
+                <span class="dpad-label">왼쪽</span>
+              </button>
+              <div class="dpad-center-hub">🚶</div>
+              <button class="btn-dpad btn-dpad-right" type="button" data-dir="right" aria-label="오른쪽으로 이동">
+                <span class="dpad-icon">➡️</span>
+                <span class="dpad-label">오른쪽</span>
+              </button>
+            </div>
+            <button class="btn-dpad btn-dpad-down" type="button" data-dir="down" aria-label="아래로 이동">
+              <span class="dpad-icon">⬇️</span>
+              <span class="dpad-label">아래</span>
+            </button>
+          </div>
+        </div>
+      </section>
+
+
+      <!-- ================= 6-3. 게임 4: 🗺️ 학교 길 찾기 ================= -->
+      <section id="screen-game-map" class="screen screen-game">
+        <!-- Game HUD -->
+        <header class="game-hud">
+          <button id="btn-map-exit" class="btn-hud-home" type="button" title="메인으로 돌아가기">
+            <span>🏠</span>
+            <span class="hud-home-text">학교로</span>
+          </button>
+
+          <div class="hud-timer-wrap">
+            <div class="timer-label-row">
+              <span class="timer-icon">⏱️ 남은 시간</span>
+              <span id="map-timer-text" class="timer-seconds">90초</span>
+            </div>
+            <div class="timer-bar-track">
+              <div id="map-timer-bar" class="timer-bar-fill" style="width: 100%;"></div>
+            </div>
+          </div>
+
+          <div class="hud-score-badge">
+            <span class="score-star">⭐️</span>
+            <span class="score-hud-label">점수</span>
+            <span id="map-current-score" class="score-hud-val">0</span>
+            <span class="score-hud-unit">점</span>
+          </div>
+        </header>
+
+        <!-- Mission Banner -->
+        <div class="mission-banner map-mission-banner">
+          <div class="mission-info">
+            <span class="mission-tag">📍 지금 가야 할 곳</span>
+            <div class="map-target-pill">
+              <span id="map-mission-situation" class="mission-situation-text">배가 아파요!</span>
+              <span class="mission-arrow">👉</span>
+              <span id="map-mission-target-icon" class="mission-target-icon">🏥</span>
+              <span id="map-mission-target-name" class="mission-target-name">보건실</span>
+            </div>
+          </div>
+
+          <button id="btn-map-repeat-voice" class="btn-repeat-speech" type="button">
+            <span class="repeat-icon">🔊</span>
+            <span class="repeat-text">안내 다시 듣기</span>
+          </button>
+        </div>
+
+        <!-- School Map Canvas Stage -->
+        <div class="game-canvas-container" id="map-canvas-wrapper">
+          <canvas id="schoolmap-canvas" width="960" height="540"></canvas>
+
+          <!-- Floating Minimap (Top-Right) -->
+          <div class="minimap-container">
+            <div class="minimap-header">
+              <span class="minimap-title">🗺️ 우리 학교 지도</span>
+            </div>
+            <canvas id="schoolmap-minimap" width="200" height="140"></canvas>
+            <div class="minimap-legend">
+              <span class="legend-item"><span class="legend-dot dot-player"></span>내 위치</span>
+              <span class="legend-item"><span class="legend-dot dot-star">⭐</span>목적지</span>
+            </div>
+          </div>
+
+          <!-- Virtual D-Pad (Left-Bottom, child-friendly large buttons) -->
+          <div class="virtual-dpad" id="map-dpad" aria-label="이동 방향키">
+            <button class="btn-dpad btn-dpad-up" type="button" data-dir="up" aria-label="위로 이동">
+              <span class="dpad-icon">⬆️</span>
+              <span class="dpad-label">위</span>
+            </button>
+            <div class="dpad-middle-row">
+              <button class="btn-dpad btn-dpad-left" type="button" data-dir="left" aria-label="왼쪽으로 이동">
+                <span class="dpad-icon">⬅️</span>
+                <span class="dpad-label">왼쪽</span>
+              </button>
+              <div class="dpad-center-hub">🚶</div>
+              <button class="btn-dpad btn-dpad-right" type="button" data-dir="right" aria-label="오른쪽으로 이동">
+                <span class="dpad-icon">➡️</span>
+                <span class="dpad-label">오른쪽</span>
+              </button>
+            </div>
+            <button class="btn-dpad btn-dpad-down" type="button" data-dir="down" aria-label="아래로 이동">
+              <span class="dpad-icon">⬇️</span>
+              <span class="dpad-label">아래</span>
+            </button>
+          </div>
+        </div>
+      </section>
+
+
       <!-- ================= 7. 결과 화면 (Result Screen) ================= -->
       <section id="screen-result" class="screen">
         <div class="result-card">
@@ -736,13 +911,13 @@
                     <div class="champion-sub">가장 빠르게 가방을 챙긴 친구</div>
                   </div>
 
-                  <!-- 2. 신호등 왕 (준비 중) -->
+                  <!-- 2. 신호등 왕 (Active) -->
                   <div class="champion-card champion-traffic">
                     <div class="champion-badge">🚦 신호등 왕</div>
-                    <div class="champion-avatar">🔒</div>
-                    <div class="champion-player-name">준비 중</div>
-                    <div class="champion-game-score">다음 단계 오픈</div>
-                    <div class="champion-sub">안전하게 횡단보도를 건너는 친구</div>
+                    <div class="champion-avatar">👮</div>
+                    <div class="champion-player-name" id="champ-traffic-name">기록 없음</div>
+                    <div class="champion-game-score" id="champ-traffic-score">0점</div>
+                    <div class="champion-sub">안전하게 횡단보도를 건넌 친구</div>
                   </div>
 
                   <!-- 3. 교과서 왕 -->
@@ -754,13 +929,13 @@
                     <div class="champion-sub">원하는 쪽수를 척척 펼친 친구</div>
                   </div>
 
-                  <!-- 4. 길찾기 왕 (준비 중) -->
+                  <!-- 4. 길찾기 왕 (Active) -->
                   <div class="champion-card champion-map">
                     <div class="champion-badge">🗺️ 길찾기 왕</div>
-                    <div class="champion-avatar">🔒</div>
-                    <div class="champion-player-name">준비 중</div>
-                    <div class="champion-game-score">다음 단계 오픈</div>
-                    <div class="champion-sub">학교 곳곳을 씩씩하게 찾는 친구</div>
+                    <div class="champion-avatar">🧭</div>
+                    <div class="champion-player-name" id="champ-map-name">기록 없음</div>
+                    <div class="champion-game-score" id="champ-map-score">0점</div>
+                    <div class="champion-sub">학교 곳곳을 씩씩하게 찾은 친구</div>
                   </div>
                 </div>
               </div>

@@ -2231,6 +2231,299 @@ button:active {
   100% { transform: translateY(105vh) rotate(720deg); opacity: 0; }
 }
 
+/* =============================================================================
+   [🎮 Games 3 & 4: Virtual D-Pad & Canvas Stage Styles]
+   ============================================================================= */
+
+.game-canvas-container {
+  position: relative;
+  width: 100%;
+  max-width: 1000px;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto;
+  border-radius: var(--radius-large);
+  overflow: hidden;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  border: 4px solid #B2EBF2;
+  background: #E0F7FA;
+  touch-action: none;
+}
+
+.game-canvas-container canvas {
+  width: 100%;
+  height: 100%;
+  max-height: calc(100vh - 180px);
+  object-fit: contain;
+  display: block;
+  touch-action: none;
+}
+
+/* ---------------- Virtual D-Pad ---------------- */
+.virtual-dpad {
+  position: absolute;
+  bottom: 12px;
+  left: 14px;
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  user-select: none;
+  touch-action: none;
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(6px);
+  padding: 8px;
+  border-radius: 28px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.2);
+  border: 2.5px solid rgba(255, 255, 255, 0.95);
+}
+
+.dpad-middle-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.dpad-center-hub {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: #FFE082;
+  border: 2px solid #FFB300;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.6rem;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+  pointer-events: none;
+}
+
+.btn-dpad {
+  width: 66px;
+  height: 62px;
+  border-radius: 20px;
+  background: linear-gradient(145deg, #FFFFFF, #E1F5FE);
+  border: 3px solid #0288D1;
+  box-shadow: 0 5px 0 #0277BD, 0 8px 12px rgba(0, 0, 0, 0.15);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  cursor: pointer;
+  touch-action: none;
+  user-select: none;
+  transition: transform 0.05s ease, background 0.05s ease, box-shadow 0.05s ease;
+}
+
+.btn-dpad .dpad-icon {
+  font-size: 1.45rem;
+  line-height: 1;
+  pointer-events: none;
+}
+
+.btn-dpad .dpad-label {
+  font-size: 0.75rem;
+  font-family: 'Jua', 'Nanum Gothic', sans-serif;
+  color: #01579B;
+  font-weight: bold;
+  pointer-events: none;
+}
+
+.btn-dpad:active,
+.btn-dpad.is-active {
+  transform: translateY(4px);
+  box-shadow: 0 1px 0 #0277BD, 0 3px 6px rgba(0, 0, 0, 0.15);
+  background: #81D4FA;
+  border-color: #01579B;
+}
+
+.btn-dpad-up {
+  margin-bottom: 4px;
+}
+
+.btn-dpad-down {
+  margin-top: 4px;
+}
+
+/* ---------------- Traffic Light & Status Pills ---------------- */
+.traffic-status-display,
+.map-target-pill {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.traffic-pill-green {
+  background: #E8F5E9;
+  color: #2E7D32;
+  border: 2px solid #81C784;
+  padding: 6px 16px;
+  border-radius: 20px;
+  font-size: 1.25rem;
+  font-weight: 800;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.traffic-pill-red {
+  background: #FFEBEE;
+  color: #C62828;
+  border: 2px solid #E57373;
+  padding: 6px 16px;
+  border-radius: 20px;
+  font-size: 1.25rem;
+  font-weight: 800;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  animation: pulse-border 1s infinite alternate;
+}
+
+@keyframes pulse-border {
+  0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(229, 115, 115, 0.4); }
+  100% { transform: scale(1.03); box-shadow: 0 0 0 8px rgba(229, 115, 115, 0); }
+}
+
+.map-target-pill {
+  background: #FFF8E1;
+  border: 2.5px solid #FFB300;
+  padding: 6px 18px;
+  border-radius: 24px;
+  font-size: 1.3rem;
+  font-weight: bold;
+}
+
+.mission-situation-text {
+  color: #D84315;
+  font-weight: 800;
+}
+
+.mission-arrow {
+  color: #FB8C00;
+  font-weight: bold;
+}
+
+.mission-target-icon {
+  font-size: 1.5rem;
+}
+
+.mission-target-name {
+  color: #00695C;
+  font-weight: 800;
+  font-size: 1.4rem;
+  text-decoration: underline wavy #FFB300 2px;
+}
+
+/* ---------------- Floating Minimap (School Map Game) ---------------- */
+.minimap-container {
+  position: absolute;
+  top: 12px;
+  right: 14px;
+  z-index: 50;
+  background: rgba(255, 255, 255, 0.92);
+  border: 3px solid #4DD0E1;
+  border-radius: 18px;
+  padding: 6px 8px;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.16);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  pointer-events: none;
+}
+
+.minimap-header {
+  font-size: 0.85rem;
+  font-family: 'Jua', sans-serif;
+  color: #00838F;
+  margin-bottom: 4px;
+  font-weight: bold;
+}
+
+#schoolmap-minimap {
+  width: 170px;
+  height: 110px;
+  border-radius: 10px;
+  border: 1.5px solid #B2EBF2;
+  background: #E8F5E9;
+  display: block;
+}
+
+.minimap-legend {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 4px;
+  font-size: 0.78rem;
+  font-weight: bold;
+  color: #455A64;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.legend-dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.dot-player {
+  background: #00E676;
+  border: 1.5px solid #00B0FF;
+  box-shadow: 0 0 6px #00E676;
+}
+
+.dot-star {
+  font-size: 0.85rem;
+}
+
+/* ---------------- Warning Overlay ---------------- */
+.game-warning-overlay {
+  position: absolute;
+  top: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 70;
+  pointer-events: none;
+  animation: bounceIn 0.3s ease-out;
+}
+
+.warning-box {
+  background: #D32F2F;
+  color: #FFFFFF;
+  padding: 10px 22px;
+  border-radius: 30px;
+  border: 3px solid #FFCDD2;
+  box-shadow: 0 8px 20px rgba(211, 47, 47, 0.4);
+  font-size: 1.3rem;
+  font-weight: 800;
+  font-family: 'Jua', sans-serif;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  letter-spacing: -0.5px;
+}
+
+.warning-icon {
+  font-size: 1.6rem;
+}
+
+@keyframes bounceIn {
+  0% { transform: translateX(-50%) scale(0.7); opacity: 0; }
+  60% { transform: translateX(-50%) scale(1.08); opacity: 1; }
+  100% { transform: translateX(-50%) scale(1); opacity: 1; }
+}
+
 /* ---------------- Responsive Tweaks for Narrow Tablet Viewports ---------------- */
 @media (max-height: 600px) {
   .start-card { padding: 18px 30px; gap: 8px; }
@@ -2243,4 +2536,6 @@ button:active {
   .game-card-title { font-size: 1.25rem; }
   .book-spread-book { height: 190px; }
   .btn-huge { font-size: 1.7rem; min-height: 60px; padding: 12px 36px; }
+  .virtual-dpad { transform: scale(0.85); transform-origin: bottom left; }
+  .minimap-container { transform: scale(0.85); transform-origin: top right; }
 }
