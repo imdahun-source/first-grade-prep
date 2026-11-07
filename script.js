@@ -1358,19 +1358,49 @@ function startBookGame() {
   });
 }
 
+/**
+ * 교과서 쪽수를 한국어 한자어 수사(일, 이, 삼, 사, ... 칠, ... 사십칠, ... 구십구, 백)로 변환
+ * 유아/초등 1학년 수학교육 기준: '일곱 쪽' -> '칠 쪽', '마흔일곱 쪽' -> '사십칠 쪽', '아흔아홉 쪽' -> '구십구 쪽'
+ */
+function numberToSinoKorean(num) {
+  const digits = ['', '일', '이', '삼', '사', '오', '육', '칠', '팔', '구'];
+  if (num === 100) return '백';
+  if (num < 10) return digits[num];
+
+  const tens = Math.floor(num / 10);
+  const ones = num % 10;
+
+  let result = '';
+  if (tens === 1) {
+    result += '십';
+  } else {
+    result += digits[tens] + '십';
+  }
+
+  if (ones > 0) {
+    result += digits[ones];
+  }
+  return result;
+}
+
 function nextBookProblem() {
   state.book.targetPage = Math.floor(Math.random() * 98) + 2;
   state.book.isBookOpen = false;
 
   const targetNumEl = document.getElementById('book-target-page-num');
+  const targetWordEl = document.getElementById('book-target-korean-word');
+  const pageWord = numberToSinoKorean(state.book.targetPage);
+
   if (targetNumEl) targetNumEl.textContent = state.book.targetPage;
+  if (targetWordEl) targetWordEl.textContent = `(${pageWord} 쪽)`;
 
   showBookClosedView();
   speakBookTarget();
 }
 
 function speakBookTarget() {
-  speak(`${state.book.targetPage} 쪽을 펴세요!`);
+  const pageWord = numberToSinoKorean(state.book.targetPage);
+  speak(`${pageWord} 쪽을 펴세요!`);
 }
 
 function showBookClosedView() {
@@ -1831,11 +1861,14 @@ function startTrafficGame() {
     step: 0
   };
   state.traffic.trafficLight = 'green';
+  state.traffic.greenDuration = 7;
+  state.traffic.redDuration = 5;
+  state.traffic.lightSecondsLeft = 7;
   state.traffic.crosswalk1 = { x: 380, width: 140 };
   state.traffic.crosswalk2 = { x: 440, width: 140 };
   state.traffic.cars = [];
 
-  updateTrafficPill(true);
+  updateTrafficPill();
 
   startCountdown(() => {
     startGameTimer('traffic');
@@ -1855,36 +1888,56 @@ function stopTrafficGame() {
   trafficLightInterval = null;
 }
 
-function updateTrafficPill(isGreen) {
+function updateTrafficPill() {
   const pill = document.getElementById('traffic-light-pill');
   if (!pill) return;
+
+  const isGreen = state.traffic.trafficLight === 'green';
+  const sec = state.traffic.lightSecondsLeft || 0;
+
   if (isGreen) {
-    pill.className = 'traffic-pill-green';
-    pill.innerHTML = '🟢 초록불이에요! 횡단보도로 건너요';
+    if (sec <= 2) {
+      pill.className = 'traffic-pill-green is-blinking';
+      pill.innerHTML = `🟢 초록불 깜빡깜빡! ⏱️ <strong>${sec}초</strong> 남음`;
+    } else {
+      pill.className = 'traffic-pill-green';
+      pill.innerHTML = `🟢 초록불! 횡단보도로 건너요 ⏱️ <strong>${sec}초</strong> 남음`;
+    }
   } else {
     pill.className = 'traffic-pill-red';
-    pill.innerHTML = '🔴 빨간불이에요, 멈춰요!';
+    pill.innerHTML = `🔴 빨간불이에요, 멈춰요! ⏱️ <strong>${sec}초</strong> 후 초록불`;
   }
 }
 
 function startTrafficLightCycle() {
   if (trafficLightInterval) clearInterval(trafficLightInterval);
 
+  state.traffic.lightSecondsLeft = state.traffic.trafficLight === 'green'
+    ? state.traffic.greenDuration
+    : state.traffic.redDuration;
+  updateTrafficPill();
+
   trafficLightInterval = setInterval(() => {
     if (!state.traffic.running) return;
 
-    if (state.traffic.trafficLight === 'green') {
-      state.traffic.trafficLight = 'red';
-      updateTrafficPill(false);
-      soundEffects.beep();
-      speak('빨간불이에요, 멈춰요');
-    } else {
-      state.traffic.trafficLight = 'green';
-      updateTrafficPill(true);
-      soundEffects.ding();
-      speak('초록불이에요');
+    state.traffic.lightSecondsLeft--;
+
+    if (state.traffic.lightSecondsLeft <= 0) {
+      if (state.traffic.trafficLight === 'green') {
+        state.traffic.trafficLight = 'red';
+        state.traffic.lightSecondsLeft = state.traffic.redDuration;
+        soundEffects.beep();
+        speak('빨간불이에요, 멈춰요');
+      } else {
+        state.traffic.trafficLight = 'green';
+        state.traffic.lightSecondsLeft = state.traffic.greenDuration;
+        soundEffects.ding();
+        speak('초록불이에요');
+      }
     }
-  }, 6000);
+
+    updateTrafficPill();
+  }, 1000);
 }
 
 function initTrafficCars() {
@@ -2147,10 +2200,59 @@ function drawTrafficCanvas(ctx) {
   ctx.fillStyle = '#E65100';
   ctx.fillText('🏡 우리 집 (출발선) 🚩', 480, 532);
 
-  // 6) 신호등 그리기 (도로 1 & 2 옆)
+  // 6) 신호등 그리기 (도로 1 & 2 옆) 및 잔여시간 표시
   const isGreen = state.traffic.trafficLight === 'green';
-  drawTrafficLightUnit(ctx, cw1.x + cw1.width + 16, 420, isGreen);
-  drawTrafficLightUnit(ctx, cw2.x - 22, 175, isGreen);
+  const secLeft = state.traffic.lightSecondsLeft || 0;
+  drawTrafficLightUnit(ctx, cw1.x + cw1.width + 20, 420, isGreen, secLeft);
+  drawTrafficLightUnit(ctx, cw2.x - 24, 180, isGreen, secLeft);
+
+  // 6-2) 횡단보도 앞 잔여시간 안내 표지 (아이들이 즉각 볼 수 있는 큰 알림판)
+  ctx.save();
+  ctx.textAlign = 'center';
+  ctx.font = 'bold 12px "Jua", sans-serif';
+  if (isGreen) {
+    const blink = (secLeft <= 2 && Date.now() % 400 < 200);
+    ctx.fillStyle = blink ? 'rgba(255, 235, 59, 0.95)' : 'rgba(200, 230, 201, 0.95)';
+    ctx.strokeStyle = '#2E7D32';
+    ctx.lineWidth = 1.8;
+
+    // 도로 1 횡단보도 앞
+    ctx.beginPath();
+    ctx.roundRect(cw1.x + cw1.width / 2 - 62, 316, 124, 20, 10);
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = '#1B5E20';
+    ctx.fillText(`🟢 건너요! ⏱️ ${secLeft}초 남음`, cw1.x + cw1.width / 2, 330);
+
+    // 도로 2 횡단보도 앞
+    ctx.beginPath();
+    ctx.roundRect(cw2.x + cw2.width / 2 - 62, 76, 124, 20, 10);
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = '#1B5E20';
+    ctx.fillText(`🟢 건너요! ⏱️ ${secLeft}초 남음`, cw2.x + cw2.width / 2, 90);
+  } else {
+    ctx.fillStyle = 'rgba(255, 205, 210, 0.95)';
+    ctx.strokeStyle = '#C62828';
+    ctx.lineWidth = 1.8;
+
+    // 도로 1
+    ctx.beginPath();
+    ctx.roundRect(cw1.x + cw1.width / 2 - 62, 316, 124, 20, 10);
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = '#B71C1C';
+    ctx.fillText(`🔴 멈춰요! (${secLeft}초 후 초록불)`, cw1.x + cw1.width / 2, 330);
+
+    // 도로 2
+    ctx.beginPath();
+    ctx.roundRect(cw2.x + cw2.width / 2 - 62, 76, 124, 20, 10);
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = '#B71C1C';
+    ctx.fillText(`🔴 멈춰요! (${secLeft}초 후 초록불)`, cw2.x + cw2.width / 2, 90);
+  }
+  ctx.restore();
 
   // 7) 자동차 그리기
   state.traffic.cars.forEach(car => {
@@ -2163,39 +2265,87 @@ function drawTrafficCanvas(ctx) {
   drawKidCharacter(ctx, p.x, p.y, p.dir, p.step, isMoving);
 }
 
-function drawTrafficLightUnit(ctx, x, y, isGreen) {
+function drawTrafficLightUnit(ctx, x, y, isGreen, secLeft) {
   ctx.save();
+
   // 기둥
   ctx.fillStyle = '#78909C';
-  ctx.fillRect(x - 3, y - 5, 6, 26);
+  ctx.fillRect(x - 3, y - 8, 6, 36);
 
-  // 신호등 본체
+  // 1. 신호등 본체 (빨간불, 초록불)
   ctx.fillStyle = '#263238';
   ctx.beginPath();
-  ctx.roundRect(x - 12, y - 35, 24, 34, 6);
+  ctx.roundRect(x - 13, y - 42, 26, 42, 6);
   ctx.fill();
   ctx.strokeStyle = '#37474F';
+  ctx.lineWidth = 1.5;
   ctx.stroke();
 
   // 빨간불 (위)
-  ctx.fillStyle = !isGreen ? '#FF1744' : '#542020';
+  ctx.fillStyle = !isGreen ? '#FF1744' : '#451B1B';
   ctx.beginPath();
-  ctx.arc(x, y - 24, 6, 0, Math.PI * 2);
+  ctx.arc(x, y - 30, 6, 0, Math.PI * 2);
   ctx.fill();
   if (!isGreen) {
     ctx.shadowColor = '#FF1744';
     ctx.shadowBlur = 8;
   }
 
-  // 초록불 (아래)
-  ctx.fillStyle = isGreen ? '#00E676' : '#143820';
+  // 초록불 (아래) - 2초 이하 깜빡임
+  let greenOn = isGreen;
+  if (isGreen && secLeft <= 2) {
+    greenOn = (Date.now() % 400 < 200);
+  }
+
+  ctx.fillStyle = greenOn ? '#00E676' : '#143820';
   ctx.beginPath();
-  ctx.arc(x, y - 10, 6, 0, Math.PI * 2);
+  ctx.arc(x, y - 12, 6, 0, Math.PI * 2);
   ctx.fill();
-  if (isGreen) {
+  if (greenOn) {
     ctx.shadowColor = '#00E676';
     ctx.shadowBlur = 8;
   }
+
+  // 2. 디지털 잔여시간 표시기 (보행자 신호등 LED 타이머)
+  const timerBoxY = y - 76;
+  ctx.fillStyle = '#111111';
+  ctx.beginPath();
+  ctx.roundRect(x - 18, timerBoxY, 36, 26, 6);
+  ctx.fill();
+  ctx.strokeStyle = '#455A64';
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+
+  // 디지털 숫자
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.font = 'bold 16px monospace';
+
+  if (isGreen) {
+    if (greenOn) {
+      ctx.fillStyle = '#00E676';
+      ctx.shadowColor = '#00E676';
+      ctx.shadowBlur = 6;
+      ctx.fillText(String(secLeft), x, timerBoxY + 13);
+    }
+  } else {
+    ctx.fillStyle = '#FF5252';
+    ctx.shadowColor = '#FF5252';
+    ctx.shadowBlur = 4;
+    ctx.fillText(String(secLeft), x, timerBoxY + 13);
+  }
+
+  // 3. 상단 "초록불 N초" 말풍선
+  const badgeY = timerBoxY - 12;
+  ctx.font = 'bold 10px "Jua", sans-serif';
+  const labelText = isGreen ? `초록불 ${secLeft}초` : `빨간불 ${secLeft}초`;
+  ctx.fillStyle = isGreen ? '#2E7D32' : '#C62828';
+  ctx.beginPath();
+  ctx.roundRect(x - 26, badgeY - 8, 52, 16, 7);
+  ctx.fill();
+  ctx.fillStyle = '#FFFFFF';
+  ctx.shadowBlur = 0;
+  ctx.fillText(labelText, x, badgeY);
 
   ctx.restore();
 }
