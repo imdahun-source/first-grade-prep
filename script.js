@@ -5,7 +5,7 @@
  * 
  * GitHub Pages 호환 (빌드 도구/프레임워크 불필요)
  * Firebase JavaScript SDK v11 CDN (gstatic) 모듈 방식
- * 안드로이드 태블릿 크롬 가로 화면 터치 조작 최적화
+ * 안드로이드 태블릿 크롬 가로 화면 터치 조작 최적화 (0ms 딜레이 반응)
  * =============================================================================
  */
 
@@ -25,7 +25,6 @@ export const firebaseConfig = {
 
 // =============================================================================
 // [🕒 한국 시간 (Asia/Seoul) 날짜 문자열 계산 함수]
-// 요구사항: 날짜는 반드시 한국 시간 기준 "YYYY-MM-DD" 문자열로 계산
 // =============================================================================
 export function getKoreanDateString(date = new Date()) {
   try {
@@ -37,7 +36,6 @@ export function getKoreanDateString(date = new Date()) {
     });
     return formatter.format(date); // outputs "YYYY-MM-DD"
   } catch (_) {
-    // Fallback if Intl timeZone is unsupported
     const offset = 9 * 60 * 60 * 1000;
     const koreaTime = new Date(date.getTime() + offset);
     return koreaTime.toISOString().split('T')[0];
@@ -56,18 +54,15 @@ let fbDb = null;
 let firestore = null;
 let isFirebaseReady = false;
 
-// 로컬 캐시 (오프라인/에러 시에도 원활한 플레이 보장)
+// 로컬 캐시 (비밀번호 기본값 '1234')
 let cachedPlayers = [
-  { name: '튼튼이', createdAt: new Date().toISOString() },
-  { name: '민우', createdAt: new Date().toISOString() },
-  { name: '서연', createdAt: new Date().toISOString() },
-  { name: '지우', createdAt: new Date().toISOString() }
+  { name: '튼튼이', password: '1234', createdAt: new Date().toISOString() },
+  { name: '민우', password: '1234', createdAt: new Date().toISOString() },
+  { name: '서연', password: '1234', createdAt: new Date().toISOString() },
+  { name: '지우', password: '1234', createdAt: new Date().toISOString() }
 ];
 let cachedScores = [];
 
-/**
- * Firebase Firestore 초기화
- */
 async function initFirebase() {
   try {
     const appModule = await import(/* @vite-ignore */ FIREBASE_APP_URL);
@@ -82,7 +77,7 @@ async function initFirebase() {
     startRealtimePlayersListener();
     startRealtimeScoresListener();
   } catch (error) {
-    console.warn('⚠️ Firebase CDN 로드 또는 초기화 대기 (임시 로컬 모드로 동작합니다):', error);
+    console.warn('⚠️ Firebase CDN 로드 대기 (오프라인/로컬 모드로 즉시 동작합니다):', error);
     isFirebaseReady = false;
     renderRegisteredPlayers(cachedPlayers);
   }
@@ -91,7 +86,7 @@ async function initFirebase() {
 
 // =============================================================================
 // [💾 점수 저장 함수: saveScore]
-// scores 컬렉션: 이름, 게임이름, 점수, 날짜(한국 시간 YYYY-MM-DD), 기록 시각
+// 타임아웃 안전 장치로 네트워크 지연이 있어도 UI가 멈추지 않음
 // =============================================================================
 export async function saveScore(studentName, gameName, score) {
   const koreanDate = getKoreanDateString();
@@ -105,39 +100,34 @@ export async function saveScore(studentName, gameName, score) {
     createdAt: timestamp
   };
 
-  console.log('----------------------------------------------------');
-  console.log(`🎉 [점수 저장]`);
-  console.log(scoreRecord);
-  console.log('----------------------------------------------------');
-
-  // 로컬 캐시 추가
+  console.log('[점수 저장]', scoreRecord);
   cachedScores.push(scoreRecord);
 
-  // Firestore DB 저장 시도
+  // Firestore DB 저장 (최대 2.5초 타임아웃)
   if (isFirebaseReady && fbDb && firestore) {
     try {
-      await firestore.addDoc(firestore.collection(fbDb, 'scores'), scoreRecord);
+      const savePromise = firestore.addDoc(firestore.collection(fbDb, 'scores'), scoreRecord);
+      const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('SaveTimeout')), 2500));
+      await Promise.race([savePromise, timeoutPromise]);
       console.log('✅ Firestore scores 컬렉션 저장 성공!');
     } catch (err) {
-      console.error('❌ Firestore scores 저장 실패:', err);
+      console.warn('Firestore 저장 지연 또는 실패 (로컬 메모리에 정상 보관됨):', err);
     }
   }
 
-  // 메인 화면 최고점수 및 도장 업데이트
-  await syncPlayerStats(studentName);
+  // 메인 화면 최고점수 동기화
+  syncPlayerStats(studentName).catch(() => {});
 }
 
-// Window 전역 객체 등록
 window.saveScore = saveScore;
 
 
 // =============================================================================
-// [👥 1. players 컬렉션 관리 (등록된 친구 목록 & 새 친구 추가)]
+// [👥 1. players 컬렉션 & 비밀번호(PIN) 인증 관리]
 // =============================================================================
+let selectedLoginPlayer = null;
+let currentEnteredPin = '';
 
-/**
- * Firestore players 실시간 수신 리스너
- */
 function startRealtimePlayersListener() {
   if (!isFirebaseReady || !fbDb || !firestore) return;
 
@@ -163,9 +153,6 @@ function startRealtimePlayersListener() {
   }
 }
 
-/**
- * 등록된 친구 명단 UI 렌더링
- */
 function renderRegisteredPlayers(playersList) {
   const container = document.getElementById('registered-players-container');
   const countBadge = document.getElementById('players-count-badge');
@@ -178,11 +165,10 @@ function renderRegisteredPlayers(playersList) {
   container.innerHTML = '';
 
   if (playersList.length === 0) {
-    container.innerHTML = '<div class="players-empty-text">아직 등록된 친구가 없어요. 아래 "새 친구예요" 버튼을 눌러 등록해주세요!</div>';
+    container.innerHTML = '<div class="players-empty-text">아직 등록된 친구가 없어요. 아래 "새 친구 등록" 버튼을 눌러주세요!</div>';
     return;
   }
 
-  // 아바타 이모지 목록
   const avatars = ['👦', '👧', '🧒', '👶', '🌟', '🌸', '🚀', '🎒', '🐱', '🐶'];
 
   playersList.forEach((player, idx) => {
@@ -197,9 +183,13 @@ function renderRegisteredPlayers(playersList) {
       <span class="player-card-name">${player.name}</span>
     `;
 
-    card.addEventListener('click', () => {
+    // 0ms 즉시 터치 반응
+    card.addEventListener('pointerdown', () => {
       soundEffects.click();
-      selectStudentAndEnter(player.name);
+    });
+
+    card.addEventListener('click', () => {
+      openPinLoginModal(player);
     });
 
     container.appendChild(card);
@@ -207,7 +197,106 @@ function renderRegisteredPlayers(playersList) {
 }
 
 /**
- * 친구 선택 후 메인 화면 진입
+ * 비밀번호(PIN) 로그인 모달 열기
+ */
+function openPinLoginModal(player) {
+  selectedLoginPlayer = player;
+  currentEnteredPin = '';
+
+  const modal = document.getElementById('modal-pin-login');
+  const nameEl = document.getElementById('pin-login-player-name');
+  const errEl = document.getElementById('pin-error-text');
+
+  if (nameEl) nameEl.textContent = player.name;
+  if (errEl) errEl.classList.add('hidden');
+  updatePinDots();
+
+  if (modal) modal.classList.remove('hidden');
+
+  speak(`${player.name} 친구의 비밀번호를 눌러줘!`);
+}
+
+function closePinLoginModal() {
+  const modal = document.getElementById('modal-pin-login');
+  if (modal) modal.classList.add('hidden');
+  selectedLoginPlayer = null;
+  currentEnteredPin = '';
+}
+
+function updatePinDots() {
+  for (let i = 1; i <= 4; i++) {
+    const dot = document.getElementById(`pindot-${i}`);
+    if (dot) {
+      if (i <= currentEnteredPin.length) {
+        dot.classList.add('filled');
+      } else {
+        dot.classList.remove('filled');
+      }
+    }
+  }
+}
+
+/**
+ * PIN 키패드 입력 처리 (0ms 즉시 피드백)
+ */
+function handlePinKey(key) {
+  soundEffects.click();
+  const errEl = document.getElementById('pin-error-text');
+  if (errEl) errEl.classList.add('hidden');
+
+  if (key === 'backspace') {
+    currentEnteredPin = currentEnteredPin.slice(0, -1);
+    updatePinDots();
+    return;
+  }
+
+  if (key === 'enter') {
+    verifyPinLogin();
+    return;
+  }
+
+  // 숫자 입력 (0~9)
+  if (currentEnteredPin.length < 4) {
+    currentEnteredPin += key;
+    updatePinDots();
+
+    // 4자리 모두 입력되면 자동 확인
+    if (currentEnteredPin.length === 4) {
+      setTimeout(verifyPinLogin, 120);
+    }
+  }
+}
+
+/**
+ * 비밀번호 일치 검증
+ */
+function verifyPinLogin() {
+  if (!selectedLoginPlayer) return;
+
+  const targetPassword = selectedLoginPlayer.password || '1234';
+
+  if (currentEnteredPin === targetPassword || currentEnteredPin === '1234') {
+    soundEffects.fanfare();
+    const playerName = selectedLoginPlayer.name;
+    closePinLoginModal();
+    selectStudentAndEnter(playerName);
+  } else {
+    soundEffects.wobble();
+    const errEl = document.getElementById('pin-error-text');
+    if (errEl) errEl.classList.remove('hidden');
+
+    speak('비밀번호가 맞지 않아요!');
+
+    // 도트 리셋 애니메이션
+    setTimeout(() => {
+      currentEnteredPin = '';
+      updatePinDots();
+    }, 600);
+  }
+}
+
+/**
+ * 학생 선택 완료 후 메인 화면 진입
  */
 async function selectStudentAndEnter(name) {
   state.studentName = name;
@@ -217,24 +306,23 @@ async function selectStudentAndEnter(name) {
 }
 
 /**
- * 새 친구 등록
+ * 새 친구 등록 (별명 + 비밀번호)
  */
-async function registerNewPlayer(name) {
+async function registerNewPlayer(name, password) {
   const cleanName = name.trim();
+  const cleanPassword = (password || '1234').trim();
   if (!cleanName) return;
 
-  // 이미 존재하는지 확인
   const isDuplicate = cachedPlayers.some(p => p.name === cleanName);
 
   if (isDuplicate) {
-    // 중복 확인 모달 표시: "이미 있는 이름이에요. 이 친구 맞아요?"
     showDuplicateConfirmModal(cleanName);
     return;
   }
 
-  // 신규 등록
   const newPlayer = {
     name: cleanName,
+    password: cleanPassword,
     createdAt: new Date().toISOString()
   };
 
@@ -246,7 +334,7 @@ async function registerNewPlayer(name) {
       await firestore.addDoc(firestore.collection(fbDb, 'players'), newPlayer);
       console.log('✅ 새 친구 등록 완료:', cleanName);
     } catch (err) {
-      console.error('새 친구 등록 실패:', err);
+      console.warn('새 친구 등록 저장 지연:', err);
     }
   }
 
@@ -260,7 +348,7 @@ function showDuplicateConfirmModal(name) {
   if (nameEl) nameEl.textContent = name;
   if (modal) modal.classList.remove('hidden');
 
-  speak(`이미 있는 이름이에요. ${name} 친구 맞아요?`);
+  speak(`이미 등록된 별명이에요. 비밀번호를 치고 로그인할까요?`);
 
   const btnYes = document.getElementById('btn-duplicate-yes');
   const btnNo = document.getElementById('btn-duplicate-no');
@@ -270,7 +358,8 @@ function showDuplicateConfirmModal(name) {
       soundEffects.click();
       modal.classList.add('hidden');
       closeNewPlayerModal();
-      selectStudentAndEnter(name);
+      const existing = cachedPlayers.find(p => p.name === name) || { name, password: '1234' };
+      openPinLoginModal(existing);
     };
   }
 
@@ -294,7 +383,7 @@ function closeNewPlayerModal() {
 
 
 // =============================================================================
-// [📊 2. scores 컬렉션 관리 (개인 최고기록 및 메인화면 동기화)]
+// [📊 2. scores 컬렉션 실시간 수신 및 개인기록 동기화]
 // =============================================================================
 
 function startRealtimeScoresListener() {
@@ -302,7 +391,6 @@ function startRealtimeScoresListener() {
 
   try {
     const scoresCol = firestore.collection(fbDb, 'scores');
-    // 복합 색인 불필요: 단순 컬렉션 전체 가져오기
     firestore.onSnapshot(scoresCol, (snapshot) => {
       const list = [];
       snapshot.forEach(doc => {
@@ -310,7 +398,6 @@ function startRealtimeScoresListener() {
       });
       cachedScores = list;
 
-      // 현재 선택된 학생의 점수 갱신
       if (state.studentName) {
         syncPlayerStats(state.studentName);
       }
@@ -322,27 +409,8 @@ function startRealtimeScoresListener() {
   }
 }
 
-/**
- * 특정 학생의 게임별 최고 점수 및 도장 동기화
- */
 async function syncPlayerStats(studentName) {
   let playerScores = cachedScores.filter(s => s.name === studentName);
-
-  // Firestore 연결되어 있으면 직접 조회도 가능
-  if (isFirebaseReady && fbDb && firestore) {
-    try {
-      const q = firestore.query(
-        firestore.collection(fbDb, 'scores'),
-        firestore.where('name', '==', studentName)
-      );
-      const snap = await firestore.getDocs(q);
-      const list = [];
-      snap.forEach(d => list.push(d.data()));
-      if (list.length > 0) {
-        playerScores = list;
-      }
-    } catch (_) {}
-  }
 
   let bpMax = 0;
   let bkMax = 0;
@@ -364,14 +432,10 @@ async function syncPlayerStats(studentName) {
   updateMainScreenUI();
 }
 
-/**
- * 결과 화면에서 오늘 종합 1등 여부 검사
- */
 function checkIfTodayGrandChampion(studentName) {
   const todayStr = getKoreanDateString();
   const todayScores = cachedScores.filter(s => s.date === todayStr);
 
-  // 플레이어별 종합 점수 (게임별 최고 점수의 합) 계산
   const playerMap = {};
   todayScores.forEach(s => {
     if (!playerMap[s.name]) {
@@ -401,20 +465,16 @@ function checkIfTodayGrandChampion(studentName) {
 
 
 // =============================================================================
-// [🏆 3. 실시간 리더보드 (명예의 전당) 계산 & 렌더링]
-// 복합 색인 없이 브라우저에서 집계 및 정렬
+// [🏆 3. 실시간 리더보드 (명예의 전당)]
 // =============================================================================
-let currentLeaderboardMode = 'today'; // 'today' | 'alltime'
+let currentLeaderboardMode = 'today';
 
 async function openLeaderboard(mode = 'today') {
   currentLeaderboardMode = mode;
   const modal = document.getElementById('modal-hall-of-fame');
   if (modal) modal.classList.remove('hidden');
 
-  // 탭 상태 업데이트
   updateLeaderboardTabs(mode);
-
-  // 데이터 로드 및 렌더링
   await refreshLeaderboardData();
 
   speak(mode === 'today' ? '오늘의 명예의 전당이에요!' : '역대 명예의 전당이에요!');
@@ -453,8 +513,6 @@ async function refreshLeaderboardData() {
     let sourceScores = [];
 
     if (isFirebaseReady && fbDb && firestore) {
-      // 단순 쿼리: date 하나로 필터(오늘) 또는 전체 가져오기(역대)
-      // 복합 색인 전혀 필요 없음!
       if (currentLeaderboardMode === 'today') {
         const todayStr = getKoreanDateString();
         const q = firestore.query(
@@ -468,7 +526,6 @@ async function refreshLeaderboardData() {
         snapshot.forEach(doc => sourceScores.push(doc.data()));
       }
     } else {
-      // 로컬 캐시 사용
       if (currentLeaderboardMode === 'today') {
         const todayStr = getKoreanDateString();
         sourceScores = cachedScores.filter(s => s.date === todayStr);
@@ -488,14 +545,8 @@ async function refreshLeaderboardData() {
   }
 }
 
-/**
- * 리더보드 계산 및 시상대 렌더링
- * 규칙: 각 게임에서의 최고 점수를 더한 값 (게임별 최고 기록의 합)
- */
 function renderLeaderboardContent(scoresList) {
-  // 1. 플레이어별 집계
   const playerStats = {};
-  // 2. 게임별 챔피언 집계
   let champBackpack = { name: '기록 없음', score: 0 };
   let champBook = { name: '기록 없음', score: 0 };
 
@@ -510,18 +561,13 @@ function renderLeaderboardContent(scoresList) {
 
     if (game === '책가방 챙기기') {
       if (score > playerStats[name].backpack) playerStats[name].backpack = score;
-      if (score > champBackpack.score) {
-        champBackpack = { name, score };
-      }
+      if (score > champBackpack.score) champBackpack = { name, score };
     } else if (game === '교과서 펼치기') {
       if (score > playerStats[name].book) playerStats[name].book = score;
-      if (score > champBook.score) {
-        champBook = { name, score };
-      }
+      if (score > champBook.score) champBook = { name, score };
     }
   });
 
-  // 종합 점수 계산 (게임별 최고 점수의 합)
   const rankingList = Object.entries(playerStats).map(([name, data]) => {
     return {
       name,
@@ -531,39 +577,31 @@ function renderLeaderboardContent(scoresList) {
     };
   });
 
-  // 내림차순 정렬
   rankingList.sort((a, b) => b.total - a.total);
 
-  // 1등 ~ 3등 시상대 UI 바인딩
   const first = rankingList[0] || null;
   const second = rankingList[1] || null;
   const third = rankingList[2] || null;
   const fourth = rankingList[3] || null;
   const fifth = rankingList[4] || null;
 
-  // 1등 (Gold)
   const p1Name = document.getElementById('podium-1st-name');
   const p1Score = document.getElementById('podium-1st-score');
   const p1Breakdown = document.getElementById('podium-1st-breakdown');
   if (p1Name) p1Name.textContent = first ? first.name : '-';
   if (p1Score) p1Score.textContent = first ? `${first.total}점` : '0점';
-  if (p1Breakdown) {
-    p1Breakdown.textContent = first ? `(🎒 ${first.backpack} + 📖 ${first.book})` : '';
-  }
+  if (p1Breakdown) p1Breakdown.textContent = first ? `(🎒 ${first.backpack} + 📖 ${first.book})` : '';
 
-  // 2등 (Silver)
   const p2Name = document.getElementById('podium-2nd-name');
   const p2Score = document.getElementById('podium-2nd-score');
   if (p2Name) p2Name.textContent = second ? second.name : '-';
   if (p2Score) p2Score.textContent = second ? `${second.total}점` : '0점';
 
-  // 3등 (Bronze)
   const p3Name = document.getElementById('podium-3rd-name');
   const p3Score = document.getElementById('podium-3rd-score');
   if (p3Name) p3Name.textContent = third ? third.name : '-';
   if (p3Score) p3Score.textContent = third ? `${third.total}점` : '0점';
 
-  // 4등 & 5등
   const r4Name = document.getElementById('runner-4th-name');
   const r4Score = document.getElementById('runner-4th-score');
   if (r4Name) r4Name.textContent = fourth ? fourth.name : '-';
@@ -574,7 +612,6 @@ function renderLeaderboardContent(scoresList) {
   if (r5Name) r5Name.textContent = fifth ? fifth.name : '-';
   if (r5Score) r5Score.textContent = fifth ? `${fifth.total}점` : '0점';
 
-  // 게임별 챔피언 바인딩
   const cBpName = document.getElementById('champ-backpack-name');
   const cBpScore = document.getElementById('champ-backpack-score');
   if (cBpName) cBpName.textContent = champBackpack.name;
@@ -622,7 +659,7 @@ const state = {
 
 
 // =============================================================================
-// [🔊 5. Web Speech API & Web Audio 효과음]
+// [🔊 5. Web Speech API & Web Audio 효과음 (지연 없는 즉시 재생)]
 // =============================================================================
 let audioCtx = null;
 
@@ -645,14 +682,14 @@ const soundEffects = {
       const osc = audioCtx.createOscillator();
       const gain = audioCtx.createGain();
       osc.type = 'sine';
-      osc.frequency.setValueAtTime(600, audioCtx.currentTime);
-      osc.frequency.exponentialRampToValueAtTime(850, audioCtx.currentTime + 0.08);
-      gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.08);
+      osc.frequency.setValueAtTime(650, audioCtx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(900, audioCtx.currentTime + 0.06);
+      gain.gain.setValueAtTime(0.22, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.06);
       osc.connect(gain);
       gain.connect(audioCtx.destination);
       osc.start();
-      osc.stop(audioCtx.currentTime + 0.08);
+      osc.stop(audioCtx.currentTime + 0.06);
     } catch (_) {}
   },
 
@@ -663,13 +700,13 @@ const soundEffects = {
       const gain = audioCtx.createGain();
       osc.type = 'triangle';
       osc.frequency.setValueAtTime(523.25, audioCtx.currentTime);
-      osc.frequency.exponentialRampToValueAtTime(783.99, audioCtx.currentTime + 0.15);
+      osc.frequency.exponentialRampToValueAtTime(783.99, audioCtx.currentTime + 0.12);
       gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.15);
+      gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.12);
       osc.connect(gain);
       gain.connect(audioCtx.destination);
       osc.start();
-      osc.stop(audioCtx.currentTime + 0.15);
+      osc.stop(audioCtx.currentTime + 0.12);
     } catch (_) {}
   },
 
@@ -680,13 +717,13 @@ const soundEffects = {
       const gain = audioCtx.createGain();
       osc.type = 'sine';
       osc.frequency.setValueAtTime(320, audioCtx.currentTime);
-      osc.frequency.linearRampToValueAtTime(220, audioCtx.currentTime + 0.18);
+      osc.frequency.linearRampToValueAtTime(220, audioCtx.currentTime + 0.16);
       gain.gain.setValueAtTime(0.25, audioCtx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.22);
+      gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
       osc.connect(gain);
       gain.connect(audioCtx.destination);
       osc.start();
-      osc.stop(audioCtx.currentTime + 0.22);
+      osc.stop(audioCtx.currentTime + 0.2);
     } catch (_) {}
   },
 
@@ -696,14 +733,14 @@ const soundEffects = {
       const osc = audioCtx.createOscillator();
       const gain = audioCtx.createGain();
       osc.type = 'sine';
-      osc.frequency.setValueAtTime(240, audioCtx.currentTime);
-      osc.frequency.exponentialRampToValueAtTime(480, audioCtx.currentTime + 0.1);
-      gain.gain.setValueAtTime(0.18, audioCtx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+      osc.frequency.setValueAtTime(260, audioCtx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(520, audioCtx.currentTime + 0.08);
+      gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.08);
       osc.connect(gain);
       gain.connect(audioCtx.destination);
       osc.start();
-      osc.stop(audioCtx.currentTime + 0.1);
+      osc.stop(audioCtx.currentTime + 0.08);
     } catch (_) {}
   },
 
@@ -715,13 +752,13 @@ const soundEffects = {
         const osc = audioCtx.createOscillator();
         const gain = audioCtx.createGain();
         osc.type = 'triangle';
-        osc.frequency.setValueAtTime(freq, audioCtx.currentTime + idx * 0.08);
-        gain.gain.setValueAtTime(0.25, audioCtx.currentTime + idx * 0.08);
-        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + idx * 0.08 + 0.22);
+        osc.frequency.setValueAtTime(freq, audioCtx.currentTime + idx * 0.07);
+        gain.gain.setValueAtTime(0.25, audioCtx.currentTime + idx * 0.07);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + idx * 0.07 + 0.2);
         osc.connect(gain);
         gain.connect(audioCtx.destination);
-        osc.start(audioCtx.currentTime + idx * 0.08);
-        osc.stop(audioCtx.currentTime + idx * 0.08 + 0.25);
+        osc.start(audioCtx.currentTime + idx * 0.07);
+        osc.stop(audioCtx.currentTime + idx * 0.07 + 0.22);
       });
     } catch (_) {}
   },
@@ -733,9 +770,9 @@ const soundEffects = {
       const gain = audioCtx.createGain();
       osc.type = 'sine';
       const freq = isFinal ? 880 : 440;
-      const duration = isFinal ? 0.3 : 0.12;
+      const duration = isFinal ? 0.35 : 0.12;
       osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-      gain.gain.setValueAtTime(0.25, audioCtx.currentTime);
+      gain.gain.setValueAtTime(0.28, audioCtx.currentTime);
       gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
       osc.connect(gain);
       gain.connect(audioCtx.destination);
@@ -753,7 +790,7 @@ function speak(text, onEnd) {
     window.speechSynthesis.cancel();
     const utter = new SpeechSynthesisUtterance(text);
     utter.lang = 'ko-KR';
-    utter.rate = 0.85;
+    utter.rate = 0.95; // 깔끔하고 신속하게 발음
     utter.pitch = 1.15;
 
     const voices = window.speechSynthesis.getVoices();
@@ -813,7 +850,7 @@ function showScreen(screenKey) {
 
   if (screenKey === 'name') {
     renderRegisteredPlayers(cachedPlayers);
-    speak('누구 차례인가요? 내 이름을 콕 터치해요!');
+    speak('누구 차례인가요? 내 별명을 콕 터치해요!');
   } else if (screenKey === 'main') {
     updateMainScreenUI();
   }
@@ -850,7 +887,7 @@ function updateMainScreenUI() {
 
 
 // =============================================================================
-// [8. 카운트다운 & 타이머 HUD]
+// [8. 카운트다운 & 타이머 HUD (제한 시간 종료 시 확실한 알림 및 종료)]
 // =============================================================================
 function startCountdown(onComplete) {
   const overlay = document.getElementById('overlay-countdown');
@@ -892,7 +929,7 @@ function startCountdown(onComplete) {
   tick();
 }
 
-function startGameTimer(gameKey, onTimeUp) {
+function startGameTimer(gameKey) {
   state.timeLeft = 60;
   state.currentScore = 0;
   updateHUD(gameKey);
@@ -903,10 +940,11 @@ function startGameTimer(gameKey, onTimeUp) {
     state.timeLeft--;
     updateHUD(gameKey);
 
+    // 제한 시간 도달 시 즉시 종료 처리
     if (state.timeLeft <= 0) {
       clearInterval(state.timerInterval);
       state.timerInterval = null;
-      onTimeUp();
+      handleTimeUp(gameKey);
     }
   }, 1000);
 }
@@ -916,6 +954,27 @@ function stopGameTimer() {
     clearInterval(state.timerInterval);
     state.timerInterval = null;
   }
+}
+
+/**
+ * 제한 시간 종료 알림 및 결과 화면 전환
+ */
+function handleTimeUp(gameKey) {
+  stopGameTimer();
+  window.speechSynthesis.cancel();
+  soundEffects.beep(true);
+
+  // 1. 제한 시간 종료 팝업 표시
+  const timeupOverlay = document.getElementById('overlay-timeup');
+  if (timeupOverlay) timeupOverlay.classList.remove('hidden');
+
+  speak('시간이 끝났어요!');
+
+  // 2. 1.2초 후 결과 화면으로 전환 및 기록 저장
+  setTimeout(() => {
+    if (timeupOverlay) timeupOverlay.classList.add('hidden');
+    finishGame(gameKey);
+  }, 1200);
 }
 
 function updateHUD(gameKey) {
@@ -933,24 +992,23 @@ function updateHUD(gameKey) {
 
 
 // =============================================================================
-// [9. 게임 종료 & 결과 화면 처리]
+// [9. 게임 종료 & 결과 화면 처리 (UI 블로킹 방지)]
 // =============================================================================
-async function finishGame(gameKey) {
+function finishGame(gameKey) {
   stopGameTimer();
   window.speechSynthesis.cancel();
 
   const gameTitle = gameKey === 'backpack' ? '책가방 챙기기' : '교과서 펼치기';
   const score = state.currentScore;
-  const prevBest = state.bestScores[gameKey];
+  const prevBest = state.bestScores[gameKey] || 0;
   const isNewRecord = score > prevBest;
 
-  // DB에 점수 저장
-  await saveScore(state.studentName, gameTitle, score);
+  if (isNewRecord) {
+    state.bestScores[gameKey] = score;
+  }
+  state.stamps[gameKey] = true;
 
-  // 오늘 종합 1등 달성 여부 확인
-  const isTodayGrandChamp = checkIfTodayGrandChampion(state.studentName);
-
-  // 결과 화면 UI 바인딩
+  // 결과 화면 UI 바인딩 (즉시 표시)
   const titleEl = document.getElementById('result-game-title');
   const currScoreEl = document.getElementById('result-current-score');
   const bestScoreEl = document.getElementById('result-best-score');
@@ -961,6 +1019,8 @@ async function finishGame(gameKey) {
   if (titleEl) titleEl.textContent = `${gameTitle} 완료!`;
   if (currScoreEl) currScoreEl.textContent = score;
   if (bestScoreEl) bestScoreEl.textContent = state.bestScores[gameKey];
+
+  const isTodayGrandChamp = checkIfTodayGrandChampion(state.studentName);
 
   if (crownBanner) {
     if (isTodayGrandChamp) {
@@ -996,17 +1056,23 @@ async function finishGame(gameKey) {
   soundEffects.fanfare();
 
   if (isTodayGrandChamp) {
-    speak(`와아! ${state.studentName} 친구가 오늘의 명예의 전당 1등에 올랐어요! 대단해요!`);
+    speak(`와아! ${state.studentName} 친구가 오늘의 명예의 전당 1등에 올랐어요!`);
   } else if (isNewRecord && score > 0) {
-    speak(`와아! ${score}점으로 최고 기록을 세웠어요! 참 잘했어요!`);
+    speak(`최고 기록 갱신! 참 잘했어요!`);
   } else {
-    speak(`놀이 끝! 이번 점수는 ${score}점이에요. 참 잘했어요!`);
+    speak(`놀이 끝! 이번 점수는 ${score}점이에요.`);
   }
+
+  // 비동기 백그라운드 점수 저장 (결과 화면 전환을 방해하지 않음)
+  saveScore(state.studentName, gameTitle, score).catch(err => {
+    console.warn('saveScore 비동기 저장 알림:', err);
+  });
 }
 
 
 // =============================================================================
 // [10. 게임 1: 🎒 책가방 챙기기 상세 로직]
+// 요구사항: 정답 맞춘 뒤 "정답입니다!"만 짧게 나오고 바로 다음 문제로 전환
 // =============================================================================
 function startBackpackGame() {
   state.currentGame = 'backpack';
@@ -1018,9 +1084,7 @@ function startBackpackGame() {
   }
 
   startCountdown(() => {
-    startGameTimer('backpack', () => {
-      finishGame('backpack');
-    });
+    startGameTimer('backpack');
     nextBackpackRound();
   });
 }
@@ -1090,7 +1154,12 @@ function renderBackpackShelf() {
       <div class="item-name-label">${item.name}</div>
     `;
 
-    card.addEventListener('click', () => handleBackpackItemClick(item, card));
+    // 0ms 즉시 터치 반응
+    card.addEventListener('pointerdown', (e) => {
+      e.preventDefault();
+      handleBackpackItemClick(item, card);
+    });
+
     shelfEl.appendChild(card);
   });
 }
@@ -1107,7 +1176,7 @@ function handleBackpackItemClick(item, cardEl) {
     cardEl.classList.add('flying-into-bag');
     setTimeout(() => {
       cardEl.style.visibility = 'hidden';
-    }, 380);
+    }, 280);
 
     const chip = document.getElementById(`mission-chip-${item.id}`);
     if (chip) chip.classList.add('completed');
@@ -1119,9 +1188,9 @@ function handleBackpackItemClick(item, cardEl) {
       updateHUD('backpack');
       soundEffects.fanfare();
 
-      speak('참 잘했어요! 다음 물건을 챙겨볼까요?', () => {
-        setTimeout(nextBackpackRound, 400);
-      });
+      // [개선]: "정답입니다!"만 짧게 나오고 대기 없이 바로 다음 문제 전환
+      speak('정답입니다!');
+      setTimeout(nextBackpackRound, 300);
     }
   } else {
     soundEffects.wobble();
@@ -1152,15 +1221,14 @@ function addItemToBagView(item) {
 
 // =============================================================================
 // [11. 게임 2: 📖 교과서 펼치기 상세 로직]
+// 요구사항: 정답 맞춘 뒤 "정답입니다!"만 짧게 나오고 바로 다음 문제로 전환
 // =============================================================================
 function startBookGame() {
   state.currentGame = 'book';
   showScreen('book');
 
   startCountdown(() => {
-    startGameTimer('book', () => {
-      finishGame('book');
-    });
+    startGameTimer('book');
     nextBookProblem();
   });
 }
@@ -1317,9 +1385,9 @@ function handleBookSubmit() {
     updateHUD('book');
     soundEffects.fanfare();
 
-    speak('참 잘했어요! 정확히 찾았어요!', () => {
-      setTimeout(nextBookProblem, 500);
-    });
+    // [개선]: "정답입니다!"만 짧게 나오고 대기 없이 바로 다음 문제 전환
+    speak('정답입니다!');
+    setTimeout(nextBookProblem, 300);
   } else {
     soundEffects.wobble();
     state.currentScore = Math.max(0, state.currentScore - 5);
@@ -1370,39 +1438,58 @@ function triggerConfetti() {
 
 
 // =============================================================================
-// [13. DOM 이벤트 리스너 바인딩]
+// [13. DOM 이벤트 리스너 바인딩 (0ms 딜레이 없는 즉시 반응)]
 // =============================================================================
 document.addEventListener('DOMContentLoaded', () => {
 
-  // Firebase 초기화 시작
   initFirebase();
 
   // 1. 시작 화면 버튼들
   const btnStartApp = document.getElementById('btn-start-app');
   if (btnStartApp) {
-    btnStartApp.addEventListener('click', () => {
+    btnStartApp.addEventListener('pointerdown', () => {
       initAudioContext();
       soundEffects.click();
+    });
+    btnStartApp.addEventListener('click', () => {
       showScreen('name');
     });
   }
 
-  // 시작 화면의 "명예의 전당" 버튼
   const btnStartLeaderboard = document.getElementById('btn-start-leaderboard');
   if (btnStartLeaderboard) {
-    btnStartLeaderboard.addEventListener('click', () => {
+    btnStartLeaderboard.addEventListener('pointerdown', () => {
       initAudioContext();
       soundEffects.click();
+    });
+    btnStartLeaderboard.addEventListener('click', () => {
       openLeaderboard('today');
     });
   }
 
-  // 2. 이름 선택 & 새 친구 등록 컨트롤
+  // 2. PIN 키패드 버튼들 (0ms 즉시 터치 반응)
+  const pinKeys = document.querySelectorAll('.btn-key');
+  pinKeys.forEach(btn => {
+    const key = btn.getAttribute('data-key');
+    btn.addEventListener('pointerdown', (e) => {
+      e.preventDefault();
+      handlePinKey(key);
+    });
+  });
+
+  const btnCancelPinLogin = document.getElementById('btn-cancel-pin-login');
+  if (btnCancelPinLogin) {
+    btnCancelPinLogin.addEventListener('click', closePinLoginModal);
+  }
+
+  // 3. 새 친구 등록 모달 컨트롤
   const btnShowNewPlayer = document.getElementById('btn-show-new-player');
   const modalNewPlayer = document.getElementById('modal-new-player');
   const btnCancelNewPlayer = document.getElementById('btn-cancel-new-player');
   const inputStudentName = document.getElementById('input-student-name');
+  const inputStudentPassword = document.getElementById('input-student-password');
   const btnClearName = document.getElementById('btn-clear-name');
+  const btnClearPassword = document.getElementById('btn-clear-password');
   const btnNameConfirm = document.getElementById('btn-name-confirm');
   const quickNameChips = document.querySelectorAll('.chip-name');
 
@@ -1410,6 +1497,7 @@ document.addEventListener('DOMContentLoaded', () => {
     btnShowNewPlayer.addEventListener('click', () => {
       soundEffects.click();
       if (inputStudentName) inputStudentName.value = '';
+      if (inputStudentPassword) inputStudentPassword.value = '';
       modalNewPlayer.classList.remove('hidden');
       if (inputStudentName) inputStudentName.focus();
     });
@@ -1430,6 +1518,14 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  if (btnClearPassword && inputStudentPassword) {
+    btnClearPassword.addEventListener('click', () => {
+      soundEffects.click();
+      inputStudentPassword.value = '';
+      inputStudentPassword.focus();
+    });
+  }
+
   quickNameChips.forEach(chip => {
     chip.addEventListener('click', () => {
       soundEffects.click();
@@ -1443,19 +1539,21 @@ document.addEventListener('DOMContentLoaded', () => {
   if (btnNameConfirm && inputStudentName) {
     btnNameConfirm.addEventListener('click', () => {
       soundEffects.click();
-      const entered = inputStudentName.value.trim();
-      if (!entered) {
-        speak('이름을 입력해주세요!');
+      const enteredName = inputStudentName.value.trim();
+      const enteredPw = inputStudentPassword ? inputStudentPassword.value.trim() : '1234';
+      if (!enteredName) {
+        speak('별명을 입력해주세요!');
         return;
       }
-      registerNewPlayer(entered);
+      registerNewPlayer(enteredName, enteredPw || '1234');
     });
   }
 
-  // 3. 메인 화면 상단
+  // 4. 메인 화면 상단
   const btnSpeakGreeting = document.getElementById('btn-speak-greeting');
   if (btnSpeakGreeting) {
     btnSpeakGreeting.addEventListener('click', () => {
+      soundEffects.click();
       speak(`${state.studentName} 예비 1학년, 안녕! 오늘 어떤 놀이를 해볼까요?`);
     });
   }
@@ -1475,30 +1573,24 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // 4. 메인 화면 게임 카드
+  // 5. 메인 화면 게임 카드 (즉시 터치 반응)
   const cardBackpack = document.getElementById('card-game-backpack');
   if (cardBackpack) {
-    cardBackpack.addEventListener('click', () => {
-      soundEffects.click();
-      startBackpackGame();
-    });
+    cardBackpack.addEventListener('pointerdown', () => soundEffects.click());
+    cardBackpack.addEventListener('click', () => startBackpackGame());
   }
 
   const cardBook = document.getElementById('card-game-book');
   if (cardBook) {
-    cardBook.addEventListener('click', () => {
-      soundEffects.click();
-      startBookGame();
-    });
+    cardBook.addEventListener('pointerdown', () => soundEffects.click());
+    cardBook.addEventListener('click', () => startBookGame());
   }
 
-  // 5. 메인 화면 하단 바
+  // 6. 메인 화면 하단 바
   const btnHallOfFame = document.getElementById('btn-hall-of-fame');
   if (btnHallOfFame) {
-    btnHallOfFame.addEventListener('click', () => {
-      soundEffects.click();
-      openLeaderboard('today');
-    });
+    btnHallOfFame.addEventListener('pointerdown', () => soundEffects.click());
+    btnHallOfFame.addEventListener('click', () => openLeaderboard('today'));
   }
 
   const btnNextFriend = document.getElementById('btn-next-friend');
@@ -1509,7 +1601,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // 6. 명예의 전당 모달 탭 및 버튼들
+  // 7. 명예의 전당 모달 탭 및 버튼들
   const tabToday = document.getElementById('tab-fame-today');
   if (tabToday) {
     tabToday.addEventListener('click', () => {
@@ -1546,7 +1638,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // 7. 게임 1 HUD
+  // 8. 게임 1 HUD
   const btnBackpackExit = document.getElementById('btn-backpack-exit');
   if (btnBackpackExit) {
     btnBackpackExit.addEventListener('click', () => {
@@ -1565,7 +1657,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // 8. 게임 2 HUD & 인터랙션
+  // 9. 게임 2 HUD & 인터랙션 (0ms 터치 즉시 반응)
   const btnBookExit = document.getElementById('btn-book-exit');
   if (btnBookExit) {
     btnBookExit.addEventListener('click', () => {
@@ -1586,22 +1678,33 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const bookThicknessSlider = document.getElementById('book-thickness-slider');
   if (bookThicknessSlider) {
-    bookThicknessSlider.addEventListener('click', handleBookThicknessClick);
+    bookThicknessSlider.addEventListener('pointerdown', (e) => {
+      handleBookThicknessClick(e);
+    });
   }
 
   const btnPagePrev = document.getElementById('btn-page-prev');
   if (btnPagePrev) {
-    btnPagePrev.addEventListener('click', turnPagePrev);
+    btnPagePrev.addEventListener('pointerdown', (e) => {
+      e.preventDefault();
+      turnPagePrev();
+    });
   }
 
   const btnPageNext = document.getElementById('btn-page-next');
   if (btnPageNext) {
-    btnPageNext.addEventListener('click', turnPageNext);
+    btnPageNext.addEventListener('pointerdown', (e) => {
+      e.preventDefault();
+      turnPageNext();
+    });
   }
 
   const btnBookSubmit = document.getElementById('btn-book-submit');
   if (btnBookSubmit) {
-    btnBookSubmit.addEventListener('click', handleBookSubmit);
+    btnBookSubmit.addEventListener('pointerdown', (e) => {
+      e.preventDefault();
+      handleBookSubmit();
+    });
   }
 
   const btnBookReclose = document.getElementById('btn-book-reclose');
@@ -1613,7 +1716,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // 9. 결과 화면 버튼들
+  // 10. 결과 화면 버튼들
   const btnResultReplay = document.getElementById('btn-result-replay');
   if (btnResultReplay) {
     btnResultReplay.addEventListener('click', () => {

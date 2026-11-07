@@ -115,12 +115,14 @@ button {
   justify-content: center;
   gap: 8px;
   text-decoration: none;
-  transition: transform 0.1s ease, box-shadow 0.1s ease, filter 0.15s ease;
+  transition: transform 0.05s ease, box-shadow 0.05s ease;
+  touch-action: manipulation;
 }
 
 button:active {
-  transform: translateY(4px) !important;
+  transform: scale(0.96) translateY(2px) !important;
   box-shadow: var(--shadow-button-pressed) !important;
+  transition: none !important;
 }
 
 .btn-primary {
@@ -1597,26 +1599,177 @@ button:active {
   margin-top: 4px;
 }
 
-/* 새 친구 모달 & 중복 확인 모달 */
-.new-player-card, .duplicate-confirm-card {
+/* 새 친구 모달 & 중복 확인 모달 & PIN 모달 */
+.new-player-card, .duplicate-confirm-card, .pin-login-card {
   background: #FFFFFF;
   border: 4px solid #81D4FA;
   border-radius: var(--radius-huge);
-  padding: 24px 36px;
+  padding: 24px 32px;
   text-align: center;
-  max-width: 600px;
-  width: 90%;
+  max-width: 580px;
+  width: 92%;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 14px;
+  gap: 12px;
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.35);
 }
 
-.new-player-actions, .duplicate-actions-row {
+.pin-login-card {
+  max-width: 480px;
+  border-color: #FFB74D;
+}
+
+.pin-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pin-lock-icon {
+  font-size: 2.2rem;
+}
+
+.pin-sub {
+  font-size: 1.15rem;
+  color: #546E7A;
+}
+
+/* PIN Display Dots */
+.pin-display-dots {
+  display: flex;
+  gap: 16px;
+  margin: 6px 0;
+}
+
+.pin-dot {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 3px solid #B0BEC5;
+  background: #ECEFF1;
+  transition: all 0.1s ease;
+}
+
+.pin-dot.filled {
+  background: #FF5722;
+  border-color: #E64A19;
+  transform: scale(1.15);
+  box-shadow: 0 2px 6px rgba(255, 87, 34, 0.4);
+}
+
+.pin-error-msg {
+  color: #D32F2F;
+  background: #FFEBEE;
+  padding: 4px 14px;
+  border-radius: var(--radius-huge);
+  font-size: 1.05rem;
+  font-weight: bold;
+}
+
+/* Keypad Grid */
+.keypad-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  width: 100%;
+  max-width: 340px;
+}
+
+.btn-key {
+  background: #FFFFFF;
+  border: 3px solid #CFD8DC;
+  border-radius: 16px;
+  font-size: 1.8rem;
+  font-weight: bold;
+  color: #263238;
+  padding: 12px 0;
+  box-shadow: 0 4px 0 #B0BEC5;
+  cursor: pointer;
+}
+
+.btn-key:active {
+  transform: scale(0.94) translateY(2px) !important;
+  box-shadow: 0 1px 0 #B0BEC5 !important;
+  background: #ECEFF1;
+}
+
+.btn-key-util {
+  background: #ECEFF1;
+  color: #546E7A;
+  font-size: 1.25rem;
+}
+
+.btn-key-action {
+  background: linear-gradient(180deg, #66BB6A 0%, #43A047 100%);
+  color: #FFFFFF;
+  border-color: #2E7D32;
+  box-shadow: 0 4px 0 #1B5E20;
+  font-size: 1.25rem;
+}
+
+.form-row-group {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.form-label {
+  font-size: 1.15rem;
+  font-weight: bold;
+  color: #37474F;
+  align-self: flex-start;
+  margin-left: 20px;
+}
+
+.input-pin-numeric {
+  letter-spacing: 6px;
+  font-weight: bold;
+}
+
+.pin-hint-sub {
+  font-size: 0.95rem;
+  color: #78909C;
+}
+
+.new-player-actions, .duplicate-actions-row, .pin-actions-row {
   display: flex;
   gap: 12px;
   margin-top: 6px;
+}
+
+/* ---------------- 제한 시간 초과 팝업 (Time-Up Overlay) ---------------- */
+.timeup-box {
+  background: #FFFFFF;
+  border: 6px solid #FF5722;
+  border-radius: 36px;
+  padding: 30px 48px;
+  text-align: center;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.45);
+  animation: countdownPop 0.25s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.timeup-clock-icon {
+  font-size: 5rem;
+  animation: gentleBob 0.6s infinite ease-in-out;
+}
+
+.timeup-main-title {
+  font-size: 2.8rem;
+  font-weight: bold;
+  color: #D84315;
+  text-shadow: 2px 2px 0 #FFCCBC;
+}
+
+.timeup-sub-title {
+  font-size: 1.4rem;
+  color: #546E7A;
 }
 
 .confirm-icon {

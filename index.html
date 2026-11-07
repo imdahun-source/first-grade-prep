@@ -60,19 +60,19 @@
       </section>
 
 
-      <!-- ================= 2. 이름 입력 화면 (Name Selection & Input Screen) ================= -->
+      <!-- ================= 2. 이름 및 비밀번호 로그인 화면 ================= -->
       <section id="screen-name" class="screen">
         <div class="name-card">
           <div class="card-header-kids">
             <span class="header-icon">👋</span>
             <h2>누구 차례인가요?</h2>
           </div>
-          <p class="name-sub">내 이름을 콕 터치하거나, 새 친구를 등록해요!</p>
+          <p class="name-sub">내 별명을 누르고 비밀번호를 입력하거나, 새 친구를 등록해요!</p>
 
           <!-- Registered Players Cards Grid -->
           <div class="registered-players-section">
             <div class="players-grid-header">
-              <span class="players-title">등록된 우리 반 친구들</span>
+              <span class="players-title">등록된 우리 반 친구들 (별명)</span>
               <span id="players-count-badge" class="players-count">불러오는 중...</span>
             </div>
             <div id="registered-players-container" class="players-cards-grid">
@@ -85,36 +85,79 @@
           <div class="name-footer-actions">
             <button id="btn-show-new-player" class="btn-primary btn-large" type="button">
               <span class="btn-icon">✨</span>
-              <span class="btn-text">새 친구예요 (+이름 쓰기)</span>
+              <span class="btn-text">새 친구 등록 (+별명과 비밀번호)</span>
             </button>
           </div>
         </div>
 
-        <!-- New Player Registration Modal / Dialog -->
+        <!-- 1) 기존 친구 비밀번호(PIN) 입력 모달 -->
+        <div id="modal-pin-login" class="overlay-modal hidden">
+          <div class="pin-login-card">
+            <div class="pin-header">
+              <span class="pin-lock-icon">🔒</span>
+              <h3><span id="pin-login-player-name" class="highlight-coral">친구</span>의 비밀번호</h3>
+            </div>
+            <p class="pin-sub">다른 친구가 쓰지 못하도록 4자리 비밀번호를 콕 눌러주세요!</p>
+
+            <!-- PIN Display Dots -->
+            <div class="pin-display-dots">
+              <span class="pin-dot" id="pindot-1"></span>
+              <span class="pin-dot" id="pindot-2"></span>
+              <span class="pin-dot" id="pindot-3"></span>
+              <span class="pin-dot" id="pindot-4"></span>
+            </div>
+            <div id="pin-error-text" class="pin-error-msg hidden">비밀번호가 맞지 않아요! 다시 확인해봐요.</div>
+
+            <!-- Big Child-Friendly Touch Keypad -->
+            <div class="keypad-grid">
+              <button class="btn-key" type="button" data-key="1">1</button>
+              <button class="btn-key" type="button" data-key="2">2</button>
+              <button class="btn-key" type="button" data-key="3">3</button>
+              <button class="btn-key" type="button" data-key="4">4</button>
+              <button class="btn-key" type="button" data-key="5">5</button>
+              <button class="btn-key" type="button" data-key="6">6</button>
+              <button class="btn-key" type="button" data-key="7">7</button>
+              <button class="btn-key" type="button" data-key="8">8</button>
+              <button class="btn-key" type="button" data-key="9">9</button>
+              <button class="btn-key btn-key-util" type="button" data-key="backspace" title="지우기">⌫ 지움</button>
+              <button class="btn-key" type="button" data-key="0">0</button>
+              <button class="btn-key btn-key-action" type="button" data-key="enter" title="확인">확인 ✅</button>
+            </div>
+
+            <div class="pin-actions-row">
+              <button id="btn-cancel-pin-login" class="btn-secondary btn-large" type="button">닫기</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2) 새 친구 등록 모달 (별명 + 비밀번호) -->
         <div id="modal-new-player" class="overlay-modal hidden">
           <div class="new-player-card">
             <div class="card-header-kids">
-              <span class="header-icon">✏️</span>
-              <h3>새 친구 이름 쓰기</h3>
+              <span class="header-icon">✨</span>
+              <h3>새 친구 별명과 비밀번호 만들기</h3>
             </div>
-            <p class="name-sub">선생님이 부를 이름을 적어볼까요?</p>
+            <p class="name-sub">나만의 별명과 4자리 비밀번호를 정해주세요!</p>
 
-            <div class="name-input-group">
-              <span class="name-badge-icon">🏷️</span>
-              <input
-                type="text"
-                id="input-student-name"
-                class="kids-input"
-                maxlength="8"
-                placeholder="여기를 누르고 이름을 써요"
-                autocomplete="off"
-              />
-              <button id="btn-clear-name" class="btn-secondary btn-icon-only" type="button" title="이름 지우기">❌</button>
+            <!-- 별명 입력 -->
+            <div class="form-row-group">
+              <label class="form-label">1. 별명 쓰기:</label>
+              <div class="name-input-group">
+                <span class="name-badge-icon">🏷️</span>
+                <input
+                  type="text"
+                  id="input-student-name"
+                  class="kids-input"
+                  maxlength="8"
+                  placeholder="별명을 입력해요 (예: 튼튼이)"
+                  autocomplete="off"
+                />
+                <button id="btn-clear-name" class="btn-secondary btn-icon-only" type="button" title="지우기">❌</button>
+              </div>
             </div>
 
-            <!-- Quick Name Chips for 5-year-olds -->
+            <!-- 빠른 별명 추천 칩 -->
             <div class="quick-names-section">
-              <span class="quick-label">또는 아래 예쁜 이름을 골라보세요:</span>
               <div class="quick-name-chips">
                 <button class="chip-name" type="button" data-name="튼튼이">💪 튼튼이</button>
                 <button class="chip-name" type="button" data-name="민우">👦 민우</button>
@@ -123,6 +166,26 @@
                 <button class="chip-name" type="button" data-name="하준">🚀 하준</button>
                 <button class="chip-name" type="button" data-name="수아">🌸 수아</button>
               </div>
+            </div>
+
+            <!-- 비밀번호 4자리 입력 -->
+            <div class="form-row-group">
+              <label class="form-label">2. 비밀번호 4자리 (숫자):</label>
+              <div class="name-input-group">
+                <span class="name-badge-icon">🔒</span>
+                <input
+                  type="password"
+                  id="input-student-password"
+                  class="kids-input input-pin-numeric"
+                  inputmode="numeric"
+                  pattern="[0-9]*"
+                  maxlength="4"
+                  placeholder="숫자 4자리 (예: 1234)"
+                  autocomplete="off"
+                />
+                <button id="btn-clear-password" class="btn-secondary btn-icon-only" type="button" title="지우기">❌</button>
+              </div>
+              <div class="pin-hint-sub">💡 기억하기 쉬운 숫자 4자리(생일, 전화번호 등)를 적어주세요.</div>
             </div>
 
             <div class="new-player-actions">
@@ -137,26 +200,35 @@
           </div>
         </div>
 
-        <!-- Duplicate Name Confirmation Modal -->
+        <!-- 3) 중복 별명 확인 모달 -->
         <div id="modal-duplicate-confirm" class="overlay-modal hidden">
           <div class="duplicate-confirm-card">
             <div class="confirm-icon">🤔</div>
-            <h3>이미 있는 이름이에요!</h3>
-            <p class="confirm-name-text"><strong id="duplicate-target-name">민우</strong> 친구가 이미 등록되어 있어요.</p>
-            <p class="confirm-sub">이 친구가 맞나요?</p>
+            <h3>이미 등록된 별명이에요!</h3>
+            <p class="confirm-name-text"><strong id="duplicate-target-name">민우</strong> 친구가 이미 있어요.</p>
+            <p class="confirm-sub">내 계정이 맞다면 비밀번호를 눌러 로그인할까요?</p>
             <div class="duplicate-actions-row">
               <button id="btn-duplicate-yes" class="btn-primary btn-large" type="button">
-                <span class="btn-icon">✅</span>
-                <span class="btn-text">네, 저 맞아요!</span>
+                <span class="btn-icon">🔑</span>
+                <span class="btn-text">비밀번호 치고 들어가기</span>
               </button>
               <button id="btn-duplicate-no" class="btn-secondary btn-large" type="button">
                 <span class="btn-icon">✏️</span>
-                <span class="btn-text">다른 이름 쓸게요</span>
+                <span class="btn-text">다른 별명 쓸게요</span>
               </button>
             </div>
           </div>
         </div>
       </section>
+
+      <!-- ================= 2-2. 제한 시간 초과 알림 오버레이 ================= -->
+      <div id="overlay-timeup" class="overlay-modal hidden">
+        <div class="timeup-box">
+          <div class="timeup-clock-icon">⏰</div>
+          <div class="timeup-main-title">땡! 제한시간 종료!</div>
+          <div class="timeup-sub-title">시간이 끝났어요! 점수를 저장하고 있어요...</div>
+        </div>
+      </div>
 
 
       <!-- ================= 3. 메인 화면 (Main Hub Screen) ================= -->
