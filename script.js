@@ -302,7 +302,7 @@ async function selectStudentAndEnter(name) {
   state.studentName = name;
   await syncPlayerStats(name);
   showScreen('main');
-  speak(`${state.studentName} 예비 1학년, 안녕! 학교 갈 준비를 해볼까요?`);
+  speak(`나도 이제 1학년! ${state.studentName} 친구, 학교 갈 준비를 해볼까요?`);
 }
 
 /**
@@ -790,7 +790,7 @@ function speak(text, onEnd) {
     window.speechSynthesis.cancel();
     const utter = new SpeechSynthesisUtterance(text);
     utter.lang = 'ko-KR';
-    utter.rate = 0.95; // 깔끔하고 신속하게 발음
+    utter.rate = 1.0; // 보통 속도 (표준 1.0)
     utter.pitch = 1.15;
 
     const voices = window.speechSynthesis.getVoices();
@@ -857,9 +857,13 @@ function showScreen(screenKey) {
 }
 
 function updateMainScreenUI() {
+  const nameEl = document.getElementById('label-student-name');
+  if (nameEl) {
+    nameEl.textContent = state.studentName;
+  }
   const greetingEl = document.getElementById('label-student-greeting');
   if (greetingEl) {
-    greetingEl.textContent = `${state.studentName} 예비 1학년, 안녕!`;
+    greetingEl.textContent = state.studentName;
   }
 
   const bpScoreEl = document.getElementById('score-best-backpack');
@@ -1550,11 +1554,11 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // 4. 메인 화면 상단
-  const btnSpeakGreeting = document.getElementById('btn-speak-greeting');
-  if (btnSpeakGreeting) {
-    btnSpeakGreeting.addEventListener('click', () => {
+  const mainTitleHeading = document.getElementById('main-title-heading');
+  if (mainTitleHeading) {
+    mainTitleHeading.addEventListener('click', () => {
       soundEffects.click();
-      speak(`${state.studentName} 예비 1학년, 안녕! 오늘 어떤 놀이를 해볼까요?`);
+      speak(`나도 이제 1학년! ${state.studentName} 친구, 오늘 어떤 놀이를 해볼까요?`);
     });
   }
 

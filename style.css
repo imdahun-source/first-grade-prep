@@ -401,10 +401,29 @@ button:active {
 .top-title-badge {
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-size: 1.35rem;
+  gap: 10px;
+  font-size: 1.45rem;
   font-weight: bold;
   color: #00838F;
+}
+
+.top-title-badge h2,
+.badge-text {
+  font-size: 1.45rem;
+  margin: 0;
+  font-family: 'Jua', 'Nanum Gothic', sans-serif;
+  color: #00695C;
+  letter-spacing: -0.5px;
+}
+
+.highlight-student-name {
+  color: #E64A19;
+  font-weight: 800;
+  background: #FFF3E0;
+  padding: 2px 10px;
+  border-radius: 12px;
+  border: 1.5px solid #FFCC80;
+  display: inline-block;
 }
 
 .student-greeting-pill {
